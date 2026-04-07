@@ -19,7 +19,7 @@ export function SiteShell({
   const largeBrand = current === "hot" || current === "new";
   const isDevMode = isDevAppMode();
   const resolvedTitle =
-    isDevMode && title === "Go Frieda" ? "Go Frieda Dev Mode" : title;
+    isDevMode && title === "Go Frieda" ? "Go Frieda Dev mode" : title;
 
   return (
     <main className="min-h-screen px-4 py-10 text-ink sm:px-6 lg:px-8">

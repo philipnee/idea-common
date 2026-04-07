@@ -1,3 +1,4 @@
+import path from "node:path";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { env } from "@/lib/env";
 import type { StoreShape } from "@/lib/types";
@@ -19,8 +20,8 @@ function getStorePaths() {
 
 async function ensureTemplateFile() {
   const { templatePath } = getStorePaths();
-  await mkdir(env.storePath.replace(/\/[^/]+$/, ""), { recursive: true });
-  await mkdir(templatePath.replace(/\/[^/]+$/, ""), { recursive: true });
+  await mkdir(path.dirname(env.storePath), { recursive: true });
+  await mkdir(path.dirname(templatePath), { recursive: true });
 
   try {
     await readFile(templatePath, "utf8");
@@ -31,7 +32,7 @@ async function ensureTemplateFile() {
 
 async function ensureStoreFile() {
   const { storePath, templatePath } = getStorePaths();
-  await mkdir(storePath.replace(/\/[^/]+$/, ""), { recursive: true });
+  await mkdir(path.dirname(storePath), { recursive: true });
   await ensureTemplateFile();
 
   try {
@@ -77,7 +78,7 @@ async function writeStore(store: StoreShape) {
 export async function resetStoreFromTemplate() {
   const { storePath, templatePath } = getStorePaths();
   await ensureTemplateFile();
-  await mkdir(env.storePath.replace(/\/[^/]+$/, ""), { recursive: true });
+  await mkdir(path.dirname(storePath), { recursive: true });
 
   try {
     await copyFile(templatePath, storePath);

@@ -19,6 +19,13 @@ export function IdeaFeed({
   const [loadError, setLoadError] = useState("");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    setIdeas(initialIdeas);
+    setHasMore(initialHasMore);
+    setIsLoading(false);
+    setLoadError("");
+  }, [initialHasMore, initialIdeas, sort]);
+
   async function loadMore() {
     if (isLoading || !hasMore) {
       return;
