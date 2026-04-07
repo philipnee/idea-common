@@ -25,8 +25,8 @@ export default async function HomePage({
   return (
     <SiteShell
       current={sort}
-      title="Ideas"
-      description="Browse what people want built. Post one fast. Fire the ones that deserve more momentum."
+      title="Freeda"
+      description="Public ideas worth passing around. Post one fast, then light up the ones that deserve more attention."
     >
       <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
         <div className="inline-flex w-fit border border-[#ddd0bf] bg-[#ebe2d4] p-1 shadow-card">
@@ -71,7 +71,7 @@ export default async function HomePage({
             href="/new"
             className="mt-6 inline-flex border border-[#111111] bg-[#111111] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
           >
-            Post the first one
+            POST
           </Link>
         </section>
       )}

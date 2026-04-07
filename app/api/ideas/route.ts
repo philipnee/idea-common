@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublicIdeaUrl } from "@/lib/config";
 import {
   createIdea,
   getCreateIdeaInput,
@@ -38,8 +39,12 @@ export async function POST(request: NextRequest) {
   const result = await createIdea(input, submitKey, getRemoteIpFromHeaders(request.headers));
 
   return NextResponse.json(
-    result.ok
-      ? { id: result.id }
+    result.ok && result.id
+      ? {
+          id: result.id,
+          sharePath: `/ideas/${result.id}`,
+          shareUrl: getPublicIdeaUrl(result.id, request.headers)
+        }
       : {
           message: result.message,
           challengeRequired: result.challengeRequired ?? false
@@ -47,4 +52,3 @@ export async function POST(request: NextRequest) {
     { status: result.status }
   );
 }
-

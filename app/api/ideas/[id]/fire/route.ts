@@ -17,7 +17,7 @@ export async function POST(
   return NextResponse.json({
     success: true,
     cooldown_active: result.cooldownActive ?? false,
-    fire_state: result.fireState,
+    fire_level: result.fireLevel,
     next_fire_at: result.nextFireAt ?? null
   });
 }

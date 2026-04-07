@@ -1,52 +1,35 @@
-import { getFireState } from "@/lib/ideas";
 import { joinClasses } from "@/lib/format";
-import type { FireState } from "@/lib/types";
-
-const labels: Record<FireState, string> = {
-  none: "",
-  ember: "Ember",
-  spark: "Spark",
-  flame: "Flame",
-  blaze: "Blaze",
-  wildfire: "Wildfire"
-};
+import type { FireLevel } from "@/lib/types";
 
 export function FirePill({
-  heat,
-  fireState = getFireState(heat),
+  fireLevel,
   small = false
 }: {
-  heat: number;
-  fireState?: FireState;
+  fireLevel: FireLevel;
   small?: boolean;
 }) {
-  if (fireState === "none") {
+  if (fireLevel === 0) {
     return null;
   }
 
   return (
     <span
+      aria-label={`${fireLevel} fires`}
       className={joinClasses(
-        "inline-flex items-center gap-2 border px-3 py-1 font-mono uppercase tracking-[0.16em]",
-        small ? "text-[10px]" : "text-[11px]",
-        fireState === "ember" && "border-[#dcc8a8] bg-[#f5ece0] text-[#9a6a2d]",
-        fireState === "spark" && "border-[#d5bf99] bg-[#efe4d1] text-[#9a6126]",
-        fireState === "flame" && "border-[#d1b087] bg-[#ead8bc] text-[#94471c]",
-        fireState === "blaze" && "border-[#c69773] bg-[#e4ccb2] text-[#893817]",
-        fireState === "wildfire" && "border-[#b98566] bg-[#ddc0ab] text-[#7a2810]"
+        "inline-flex items-center gap-1 border px-3 py-1 font-mono tracking-[0.12em]",
+        small ? "text-[10px]" : "text-[12px]",
+        fireLevel === 1 && "border-[#dcc8a8] bg-[#f5ece0]",
+        fireLevel === 2 && "border-[#d9bc95] bg-[#f1e2cf]",
+        fireLevel === 3 && "border-[#d8ae82] bg-[#edd9c4]",
+        fireLevel === 4 && "border-[#d09d73] bg-[#e9cfbc]",
+        fireLevel === 5 && "border-[#c68861] bg-[#e3c0b2]"
       )}
     >
-      <span
-        className={joinClasses(
-          "h-2 w-2 rounded-full",
-          fireState === "ember" && "bg-[#d19134]",
-          fireState === "spark" && "bg-[#c7712c]",
-          fireState === "flame" && "bg-[#c14d1d]",
-          fireState === "blaze" && "bg-[#a83c15]",
-          fireState === "wildfire" && "bg-[#8d2512]"
-        )}
-      />
-      {labels[fireState]}
+      {Array.from({ length: fireLevel }, (_, index) => (
+        <span key={index} className="leading-none">
+          🔥
+        </span>
+      ))}
     </span>
   );
 }

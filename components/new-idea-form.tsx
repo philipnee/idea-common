@@ -17,6 +17,7 @@ export function NewIdeaForm({
   const router = useRouter();
   const [idea, setIdea] = useState("");
   const [details, setDetails] = useState("");
+  const [externalLink, setExternalLink] = useState("");
   const [error, setError] = useState("");
   const [requiresChallenge, setRequiresChallenge] = useState(
     initialRequiresChallenge
@@ -37,6 +38,7 @@ export function NewIdeaForm({
         body: JSON.stringify({
           idea,
           details,
+          externalLink,
           postToken: initialPostToken,
           website: "",
           turnstile_token: turnstileToken
@@ -60,7 +62,7 @@ export function NewIdeaForm({
         return;
       }
 
-      router.push(`/idea/${payload.id}?posted=true`);
+      router.push(`/ideas/${payload.id}?posted=true`);
       router.refresh();
     });
   }
@@ -75,7 +77,7 @@ export function NewIdeaForm({
           htmlFor="idea"
           className="block font-mono text-[11px] uppercase tracking-[0.18em] text-muted"
         >
-          Idea
+          What is this idea?
         </label>
         <textarea
           id="idea"
@@ -85,11 +87,11 @@ export function NewIdeaForm({
           required
           value={idea}
           onChange={(event) => setIdea(event.target.value)}
-          placeholder="A startup idea in 100 characters"
+          placeholder="Local library reciprocity pass for remote workers"
           className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[16px] leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
         />
         <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-          <span>Keep it short. Add details only if they matter.</span>
+          <span>One short idea is required.</span>
           <span>{idea.length}/100</span>
         </div>
       </div>
@@ -117,6 +119,28 @@ export function NewIdeaForm({
         <div className="text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
           {details.length}/2000
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label
+          htmlFor="external-link"
+          className="block font-mono text-[11px] uppercase tracking-[0.18em] text-muted"
+        >
+          External Link
+          <span className="ml-2 font-normal lowercase tracking-normal text-muted">
+            optional
+          </span>
+        </label>
+        <input
+          id="external-link"
+          name="external_link"
+          type="url"
+          inputMode="url"
+          value={externalLink}
+          onChange={(event) => setExternalLink(event.target.value)}
+          placeholder="https://reddit.com/..."
+          className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[14px] text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
+        />
       </div>
 
       <input type="hidden" name="post_token" value={initialPostToken} />
@@ -149,11 +173,7 @@ export function NewIdeaForm({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-mono text-[11px] leading-6 text-muted">
-          Everything you post is public. Skip contact info unless you want it
-          scraped.
-        </p>
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={isPending}
@@ -162,7 +182,7 @@ export function NewIdeaForm({
             isPending && "cursor-wait opacity-80"
           )}
         >
-          {isPending ? "Posting..." : "Post Idea"}
+          POST
         </button>
       </div>
     </form>

@@ -17,7 +17,7 @@ export default async function NewIdeaPage() {
     <SiteShell
       current="post"
       title="Post"
-      description="One short idea is enough. Add details only if they matter."
+      description="What is this idea? Keep it tight. Add details or one public link only if they help."
     >
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <NewIdeaForm
@@ -30,11 +30,12 @@ export default async function NewIdeaPage() {
             Post Rules
           </p>
           <div className="mt-4 space-y-4 font-mono text-[12px] leading-6 text-muted">
-            <p>One short idea is enough. Details are optional.</p>
+            <p>One short idea is required. Details and one public link are optional.</p>
             <p>No preview. No email. No profile. The idea goes live immediately.</p>
             <p>
               Low-friction anti-abuse is active in the background: signed token,
-              timing check, rate limits, and duplicate rejection.
+              timing check, rate limits, duplicate rejection, and optional
+              title verification.
             </p>
           </div>
         </aside>

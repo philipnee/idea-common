@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { env } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Idea Commons",
-  description: "A public feed of startup ideas."
+  metadataBase: new URL(env.siteUrl),
+  title: "Freeda",
+  description: "A public feed of ideas."
 };
 
 export default function RootLayout({
@@ -17,4 +19,3 @@ export default function RootLayout({
     </html>
   );
 }
-

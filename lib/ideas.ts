@@ -26,6 +26,7 @@ import type {
 const generateIdeaId = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 const TEN_MINUTES_MS = 10 * 60 * 1_000;
 const ONE_HOUR_MS = 60 * 60 * 1_000;
+const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 const DECAY_WINDOW_MS = appConfig.fire.decayWindowHours * ONE_HOUR_MS;
 const FIRE_COOLDOWN_MS = appConfig.fire.refireCooldownHours * ONE_HOUR_MS;
 
@@ -107,11 +108,11 @@ function calculateLiveHeat(store: StoreShape, ideaId: string, now: number) {
 
     const ageMs = now - Date.parse(fire.createdAt);
 
-    if (ageMs < 0 || ageMs >= TWENTY_FOUR_HOURS_MS) {
+    if (ageMs < 0 || ageMs >= DECAY_WINDOW_MS) {
       continue;
     }
 
-    heat += 1 - ageMs / TWENTY_FOUR_HOURS_MS;
+    heat += 1 - ageMs / DECAY_WINDOW_MS;
   }
 
   return Number(heat.toFixed(4));
@@ -122,8 +123,9 @@ function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
     id: idea.id,
     idea: idea.idea,
     heat,
-    fireState: getFireState(heat),
-    createdAt: idea.createdAt
+    fireLevel: getFireLevel(heat),
+    createdAt: idea.createdAt,
+    externalLink: idea.externalLink
   };
 }
 
@@ -200,7 +202,11 @@ function recordAttempt(
   });
 }
 
-function getRecentSuccessfulPosts(store: StoreShape, submitKey: string, windowMs: number) {
+function getRecentSuccessfulPosts(
+  store: StoreShape,
+  submitKey: string,
+  windowMs: number
+) {
   const cutoff = Date.now() - windowMs;
 
   return store.ideas.filter((idea) => {
@@ -295,6 +301,8 @@ export async function createIdea(
 ): Promise<CreateIdeaResult> {
   const idea = input.idea.trim();
   const details = input.details?.trim() || null;
+  const externalLinkInput = input.externalLink?.trim() || null;
+  const normalizedExternalLink = normalizeExternalLink(externalLinkInput);
   const website = input.website?.trim() || "";
   const turnstileToken = input.turnstileToken?.trim() || "";
 
@@ -311,6 +319,24 @@ export async function createIdea(
       ok: false,
       status: 400,
       message: "Details must be 2000 characters or fewer."
+    };
+  }
+
+  if (externalLinkInput && !normalizedExternalLink) {
+    return {
+      ok: false,
+      status: 400,
+      message: "External link must be a valid http or https URL."
+    };
+  }
+
+  const qualityMessage = await verifyIdeaInput(idea);
+
+  if (qualityMessage) {
+    return {
+      ok: false,
+      status: 400,
+      message: qualityMessage
     };
   }
 
@@ -343,7 +369,7 @@ export async function createIdea(
     }
 
     const inTenMinutes = getRecentSuccessfulPosts(store, submitKey, TEN_MINUTES_MS);
-    const inOneDay = getRecentSuccessfulPosts(store, submitKey, TWENTY_FOUR_HOURS_MS);
+    const inOneDay = getRecentSuccessfulPosts(store, submitKey, ONE_DAY_MS);
 
     if (inTenMinutes >= 3 || inOneDay >= 10) {
       recordAttempt(store, submitKey, contentHash, "rate_limited");
@@ -398,6 +424,7 @@ export async function createIdea(
       id,
       idea,
       details,
+      externalLink: normalizedExternalLink,
       heat: 0,
       fireCount: 0,
       submitKey,
@@ -437,7 +464,7 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
         ok: true,
         status: 200,
         cooldownActive: true,
-        fireState: getFireState(heat),
+        fireLevel: getFireLevel(heat),
         nextFireAt: fireAccess.nextFireAt
       };
     }
@@ -459,7 +486,7 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
       ok: true,
       status: 200,
       cooldownActive: false,
-      fireState: getFireState(idea.heat),
+      fireLevel: getFireLevel(idea.heat),
       nextFireAt
     };
   });
@@ -483,6 +510,10 @@ export async function recalculateHeat() {
 export function getCreateIdeaInput(payload: Record<string, FormDataEntryValue | null>) {
   const idea = String(payload.idea ?? "");
   const details = payload.details ? String(payload.details) : null;
+  const externalLink =
+    (payload.external_link && String(payload.external_link)) ||
+    (payload.externalLink && String(payload.externalLink)) ||
+    null;
   const postToken = String(payload.post_token ?? payload.postToken ?? "");
   const website = payload.website ? String(payload.website) : null;
   const turnstileToken =
@@ -494,6 +525,7 @@ export function getCreateIdeaInput(payload: Record<string, FormDataEntryValue | 
   return {
     idea,
     details,
+    externalLink,
     postToken,
     website,
     turnstileToken

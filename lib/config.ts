@@ -1,5 +1,9 @@
 import { env } from "@/lib/env";
 
+interface HeaderBag {
+  get(name: string): string | null;
+}
+
 function readPositiveNumber(name: string, fallback: number) {
   const raw = process.env[name];
 
@@ -50,6 +54,32 @@ export function isGeminiVerificationConfigured() {
   );
 }
 
-export function getPublicIdeaUrl(id: string) {
-  return new URL(`/ideas/${id}`, env.siteUrl).toString();
+function getDefaultProtocol(host: string) {
+  return host.startsWith("localhost") || host.startsWith("127.0.0.1")
+    ? "http"
+    : "https";
+}
+
+export function getRequestOrigin(headers?: HeaderBag) {
+  if (!headers) {
+    return env.siteUrl;
+  }
+
+  const forwardedHost =
+    headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    headers.get("host")?.trim();
+
+  if (!forwardedHost) {
+    return env.siteUrl;
+  }
+
+  const forwardedProto =
+    headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ||
+    getDefaultProtocol(forwardedHost);
+
+  return `${forwardedProto}://${forwardedHost}`;
+}
+
+export function getPublicIdeaUrl(id: string, headers?: HeaderBag) {
+  return new URL(`/ideas/${id}`, getRequestOrigin(headers)).toString();
 }
