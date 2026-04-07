@@ -24,6 +24,7 @@ import type {
 const generateIdeaId = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 const TEN_MINUTES_MS = 10 * 60 * 1_000;
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1_000;
+const FIRE_COOLDOWN_MS = 6 * 60 * 60 * 1_000;
 const ONE_HOUR_MS = 60 * 60 * 1_000;
 
 function clampLimit(value: number) {
@@ -106,13 +107,59 @@ function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
 
 function projectIdeaDetail(
   idea: IdeaRecord,
-  viewerHasFired: boolean,
+  viewerCanFire: boolean,
+  nextFireAt: string | null,
   heat: number
 ): IdeaDetail {
   return {
     ...projectIdea(idea, heat),
     details: idea.details,
-    viewerHasFired
+    viewerCanFire,
+    nextFireAt
+  };
+}
+
+function getLatestViewerFire(
+  store: StoreShape,
+  ideaId: string,
+  viewerKey: string
+) {
+  const matchingFires = store.fires
+    .filter((fire) => {
+      return fire.ideaId === ideaId && fire.userFingerprint === viewerKey;
+    })
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+  return matchingFires[0] ?? null;
+}
+
+function getViewerFireAccess(
+  store: StoreShape,
+  ideaId: string,
+  viewerKey: string,
+  now: number
+) {
+  const latestFire = getLatestViewerFire(store, ideaId, viewerKey);
+
+  if (!latestFire) {
+    return {
+      viewerCanFire: true,
+      nextFireAt: null
+    };
+  }
+
+  const nextFireAtMs = Date.parse(latestFire.createdAt) + FIRE_COOLDOWN_MS;
+
+  if (nextFireAtMs <= now) {
+    return {
+      viewerCanFire: true,
+      nextFireAt: null
+    };
+  }
+
+  return {
+    viewerCanFire: false,
+    nextFireAt: new Date(nextFireAtMs).toISOString()
   };
 }
 
@@ -199,12 +246,16 @@ export async function getIdeaById(id: string, viewerKey: string) {
     return null;
   }
 
-  const viewerHasFired = store.fires.some((fire) => {
-    return fire.ideaId === id && fire.userFingerprint === viewerKey;
-  });
-  const heat = calculateLiveHeat(store, id, Date.now());
+  const now = Date.now();
+  const heat = calculateLiveHeat(store, id, now);
+  const fireAccess = getViewerFireAccess(store, id, viewerKey, now);
 
-  return projectIdeaDetail(idea, viewerHasFired, heat);
+  return projectIdeaDetail(
+    idea,
+    fireAccess.viewerCanFire,
+    fireAccess.nextFireAt,
+    heat
+  );
 }
 
 export async function getPostingContext(submitKey: string) {
@@ -353,21 +404,23 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
       };
     }
 
-    const existingFire = store.fires.find((fire) => {
-      return fire.ideaId === id && fire.userFingerprint === viewerKey;
-    });
+    const now = Date.now();
+    const fireAccess = getViewerFireAccess(store, id, viewerKey, now);
 
-    if (existingFire) {
-      const heat = calculateLiveHeat(store, id, Date.now());
+    if (!fireAccess.viewerCanFire) {
+      const heat = calculateLiveHeat(store, id, now);
       idea.heat = heat;
 
       return {
         ok: true,
         status: 200,
-        alreadyFired: true,
-        fireState: getFireState(heat)
+        cooldownActive: true,
+        fireState: getFireState(heat),
+        nextFireAt: fireAccess.nextFireAt
       };
     }
+
+    const nextFireAt = new Date(now + FIRE_COOLDOWN_MS).toISOString();
 
     store.fires.push({
       id: randomUUID(),
@@ -378,13 +431,14 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
 
     idea.fireCount += 1;
     idea.updatedAt = nowIso();
-    idea.heat = calculateLiveHeat(store, id, Date.now());
+    idea.heat = calculateLiveHeat(store, id, now);
 
     return {
       ok: true,
       status: 200,
-      alreadyFired: false,
-      fireState: getFireState(idea.heat)
+      cooldownActive: false,
+      fireState: getFireState(idea.heat),
+      nextFireAt
     };
   });
 }

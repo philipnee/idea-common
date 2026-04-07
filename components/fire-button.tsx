@@ -5,25 +5,39 @@ import { useState, useTransition } from "react";
 import { joinClasses } from "@/lib/format";
 import type { FireState } from "@/lib/types";
 
+function formatNextFire(nextFireAt: string | null) {
+  if (!nextFireAt) {
+    return null;
+  }
+
+  return new Date(nextFireAt).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
 export function FireButton({
   ideaId,
-  initiallyFired,
-  initialFireState
+  initialCanFire,
+  initialFireState,
+  initialNextFireAt
 }: {
   ideaId: string;
-  initiallyFired: boolean;
+  initialCanFire: boolean;
   initialFireState: FireState;
+  initialNextFireAt: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [hasFired, setHasFired] = useState(initiallyFired);
+  const [canFire, setCanFire] = useState(initialCanFire);
   const [fireState, setFireState] = useState(initialFireState);
+  const [nextFireAt, setNextFireAt] = useState(initialNextFireAt);
   const [error, setError] = useState("");
 
-  const label = hasFired ? "Fired" : isPending ? "Firing..." : "Fire this idea";
+  const label = !canFire ? "🔥 Cooling" : isPending ? "🔥 ..." : "🔥 Fire";
 
   async function handleFire() {
-    if (hasFired || isPending) {
+    if (!canFire || isPending) {
       return;
     }
 
@@ -34,8 +48,9 @@ export function FireButton({
       });
 
       const payload = (await response.json()) as {
-        already_fired?: boolean;
+        cooldown_active?: boolean;
         fire_state?: FireState;
+        next_fire_at?: string | null;
       };
 
       if (!response.ok) {
@@ -43,7 +58,8 @@ export function FireButton({
         return;
       }
 
-      setHasFired(true);
+      setCanFire(false);
+      setNextFireAt(payload.next_fire_at ?? null);
       if (payload.fire_state) {
         setFireState(payload.fire_state);
       }
@@ -56,10 +72,10 @@ export function FireButton({
       <button
         type="button"
         onClick={handleFire}
-        disabled={hasFired || isPending}
+        disabled={!canFire || isPending}
         className={joinClasses(
           "inline-flex min-w-48 items-center justify-center rounded-full border px-5 py-3 text-sm font-medium transition",
-          hasFired
+          !canFire
             ? "border-orange-300 bg-orange-100 text-orange-800"
             : "border-ink bg-ink text-white hover:bg-black",
           isPending && "cursor-wait opacity-80"
@@ -68,7 +84,12 @@ export function FireButton({
         {label}
       </button>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      {!error && fireState !== "none" ? (
+      {!error && !canFire && nextFireAt ? (
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+          Back at {formatNextFire(nextFireAt)}
+        </p>
+      ) : null}
+      {!error && canFire && fireState !== "none" ? (
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
           Current state: {fireState.replaceAll("_", " ")}
         </p>
@@ -76,4 +97,3 @@ export function FireButton({
     </div>
   );
 }
-

@@ -16,7 +16,7 @@ export async function GET(
 
   return NextResponse.json({
     idea,
-    viewer_has_fired: idea.viewerHasFired
+    viewer_can_fire: idea.viewerCanFire,
+    next_fire_at: idea.nextFireAt
   });
 }
-

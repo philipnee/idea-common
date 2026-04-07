@@ -58,7 +58,8 @@ export interface IdeaSummary {
 
 export interface IdeaDetail extends IdeaSummary {
   details: string | null;
-  viewerHasFired: boolean;
+  viewerCanFire: boolean;
+  nextFireAt: string | null;
 }
 
 export interface CreateIdeaInput {
@@ -80,6 +81,7 @@ export interface CreateIdeaResult {
 export interface FireIdeaResult {
   ok: boolean;
   status: number;
-  alreadyFired?: boolean;
+  cooldownActive?: boolean;
   fireState?: FireState;
+  nextFireAt?: string | null;
 }

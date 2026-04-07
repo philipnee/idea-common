@@ -70,8 +70,9 @@ export default async function IdeaDetailPage({
           <div className="pt-2">
             <FireButton
               ideaId={idea.id}
-              initiallyFired={idea.viewerHasFired}
+              initialCanFire={idea.viewerCanFire}
               initialFireState={getFireState(idea.heat)}
+              initialNextFireAt={idea.nextFireAt}
             />
           </div>
         </div>
@@ -79,4 +80,3 @@ export default async function IdeaDetailPage({
     </SiteShell>
   );
 }
-
