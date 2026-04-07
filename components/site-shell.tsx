@@ -24,7 +24,7 @@ export function SiteShell({
             <Link href="/" className="inline-flex">
               <FreedaMark
                 className={
-                  largeBrand ? "w-40 sm:w-52" : "w-28 sm:w-32"
+                  largeBrand ? "text-6xl sm:text-7xl" : "text-5xl sm:text-6xl"
                 }
               />
             </Link>
