@@ -81,6 +81,10 @@ export function FireButton({
     });
   }
 
+  if (!canFire && !error) {
+    return null;
+  }
+
   return (
     <div className="space-y-3">
       <button

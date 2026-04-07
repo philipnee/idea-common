@@ -50,7 +50,7 @@ export const appConfig = {
   fire: {
     decayWindowHours: readPositiveNumber("FIRE_DECAY_WINDOW_HOURS", 24),
     refireCooldownHours: readPositiveNumber("FIRE_REFIRE_COOLDOWN_HOURS", 6),
-    emojiThresholds: readOrderedThresholds([0.5, 1.5, 3, 5, 8] as const)
+    emojiThresholds: readOrderedThresholds([0.6, 2.4, 4.5, 7, 10] as const)
   }
 };
 
