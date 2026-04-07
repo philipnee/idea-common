@@ -1,0 +1,206 @@
+# Idea Commons — Build Specification
+# Version: v1.19
+# Created: 2026-04-07
+# Status: ACTIVE
+
+---
+
+## Changelog
+
+### v1.19 — 2026-04-07
+- Clarified the exact dev-mode home header copy to `Go Frieda Dev mode`
+- Clarified that generated dev and prod database files are runtime artifacts and should not be committed
+
+### v1.18 — 2026-04-07
+- Added `dev.sh` for a seeded dev database and `run.sh` for a separate prod database
+- Added a dedicated dev-mode label and reset action to restore the original dev seed
+- Added lazy feed loading: 20 ideas initially, then 5 more at a time
+- Clarified that the dev seed should include 50 ideas with mocked timestamps and Frieda counts
+
+### v1.17 — 2026-04-07
+- Moved the about-page narrative into a standalone text file
+- Clarified that the `/about` page should load its headline and body copy from that text file so the story can be edited without changing code
+
+---
+
+## 1. Product Overview
+
+**Go Frieda** is a public feed of ideas where people can post, browse, and signal interest.
+
+`Idea Commons` remains the internal code name only.
+
+---
+
+## 2. Brand Direction
+
+- Public-facing UI should use the name `Go Frieda`
+- The public domain is `gofrieda.org`
+- The first page and site header should feature a prominent brand mark
+- The current brand mark should be a paw print: `🐾`
+- The mark should feel clean and integrated into the page surface, not boxed-in or photo-like
+- Do not show the previous tagline under the title
+- Do not show `gofrieda.org` as visible header copy
+- In dev mode, the home header should read `Go Frieda Dev mode`
+
+---
+
+## 3. Runtime Config
+
+The app should have a central config module for runtime parameters.
+
+### AI Verification Config
+- Provider
+- Model
+- API key
+- Request endpoint base
+
+### Reaction Config
+- Decay window in hours
+- Re-fire cooldown window in hours
+- Emoji thresholds for 1 through 5 dog icons
+
+Default params:
+- `decay_window_hours = 24`
+- `refire_cooldown_hours = 6`
+- `emoji_thresholds = [0.6, 2.4, 4.5, 7, 10]`
+
+### Store Config
+- Dev mode and prod mode should use separate database files
+- The active store path should be configurable so scripts can choose the correct database
+- Generated dev and prod database files are runtime artifacts and should not be committed
+
+---
+
+## 4. Reaction Algorithm
+
+```text
+reaction_contribution = max(0, 1 - age_in_hours / decay_window_hours)
+
+heat(now) = sum(reaction_contribution for all reaction events on the idea)
+```
+
+### Dog Emoji Scale
+
+| Heat Range | Dog Icons |
+|-----------|------------|
+| 0 - 0.6 | 0 |
+| 0.6 - 2.4 | 1 |
+| 2.4 - 4.5 | 2 |
+| 4.5 - 7 | 3 |
+| 7 - 10 | 4 |
+| 10+ | 5 |
+
+### Interaction Rule
+- The same viewer may react to the same idea once every 6 hours
+- On the detail page, the reaction control should render as a dog-icon button with no visible status text
+- If the current viewer cannot react yet, do not show the reaction button at all
+
+---
+
+## 5. Feed Loading
+
+- Show 20 ideas on the first homepage render
+- After that, lazy load 5 additional ideas at a time
+- Lazy loading may be triggered by scroll visibility instead of a page navigation link
+
+---
+
+## 6. Posting Model
+
+### Fields
+- `idea` required, 10-100 chars
+- `details` optional, 0-2000 chars
+- `external_link` optional, valid `http` or `https` URL only
+
+### Copy
+- Primary field label should be `What is this idea?`
+- Primary submit button label should be `POST`
+- Do not mention startup-specific framing
+- Do not show contact-info warning copy, since there is no contact field in V1
+
+---
+
+## 7. Input Verification
+
+### Deterministic Checks
+- length
+- basic word count
+- valid optional URL
+- duplicate-content check
+- obvious placeholder or gibberish rejection
+
+### Gemini Check
+- Only run on the `idea` field
+- Only run when Gemini model and API key are both configured
+- If the config is missing, invalid, or the verification call fails, skip Gemini verification
+- If Gemini is skipped, posting should continue using deterministic checks only
+
+The model should only answer:
+- Is this obviously junk, gibberish, or meaningless placeholder text?
+
+---
+
+## 8. About Page
+
+- Add an `/about` page
+- Do not link it from the main content navigation or homepage body
+- It may be reached through a floating secondary affordance
+- That affordance should be a floating hamburger icon
+- On hover or focus, the affordance should reveal the label `About`
+- Use Frieda's image in the intro
+- Load the about-page story text from a standalone text file in the repo
+- That text file should hold the editable headline and body copy for the page
+- Keep the story short, warm, and slightly playful
+- The page should explain the site's purpose without distracting from the core posting flow
+
+---
+
+## 9. Dev And Prod Launch
+
+- Add `dev.sh`
+- `dev.sh` should use the dev database
+- The dev database should be prepopulated with 50 ideas
+- The dev seed should include mocked timestamps and mocked Frieda counts so the feed looks active
+- Add a visible reset control in dev mode that restores the original 50 seeded ideas
+- Add `run.sh`
+- `run.sh` should use the prod database
+- The prod database should start empty and should not be seeded
+
+---
+
+## 10. Share Links
+
+- Every idea should be reachable at `/ideas/[hash]`
+- After an idea is created, show the shareable `/ideas/[hash]` link
+- Automatically copy the link to the clipboard when possible
+- Also provide an explicit copy button
+
+---
+
+## 11. Definition Of Done
+
+- [ ] Public-facing UI uses the name `Go Frieda`
+- [ ] The first page and site header include a prominent paw-print brand mark
+- [ ] No homepage/header tagline is shown under the title
+- [ ] `gofrieda.org` is not shown as visible header copy
+- [ ] In dev mode, the home header reads `Go Frieda Dev mode`
+- [ ] Reaction intensity is shown as 0-5 dog emoji
+- [ ] The detail page reaction control shows only a dog icon and no visible status text
+- [ ] The detail page reaction control is hidden while the viewer is on cooldown
+- [ ] Runtime config exists for AI verification and reaction-decay parameters
+- [ ] Gemini verification only runs when both model and API key are configured
+- [ ] Gemini verification only evaluates the `idea` field
+- [ ] Posting still works when Gemini verification is skipped
+- [ ] Posting supports optional `external_link`
+- [ ] The homepage loads 20 ideas first, then lazy loads 5 at a time
+- [ ] `dev.sh` uses a seeded dev database with 50 ideas, mocked timestamps, and mocked Frieda counts
+- [ ] Dev mode has a reset control that restores the seeded dataset
+- [ ] `run.sh` uses a separate empty prod database
+- [ ] Generated dev and prod database files are treated as runtime artifacts
+- [ ] Every idea is reachable at `/ideas/[hash]`
+- [ ] A share link is shown and copied after posting
+- [ ] `/about` exists, uses Frieda's image, and reads its narrative from a text file
+
+---
+
+*End of build specification v1.19. Next amendment will be `build-v1-20.md`.*
