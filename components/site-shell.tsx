@@ -4,32 +4,43 @@ import { FreedaMark } from "@/components/freeda-mark";
 export function SiteShell({
   children,
   current = "hot",
-  title = "Freeda",
-  description = "Public ideas. Fast post. Fast fire."
+  title = "Go Frieda",
+  description = "Public ideas worth passing around. Post one fast, then light up the ones that deserve more attention.",
+  tagline = "Put your ideas out there"
 }: {
   children: React.ReactNode;
   current?: "hot" | "new" | "post";
   title?: string;
   description?: string;
+  tagline?: string;
 }) {
+  const largeBrand = current === "hot" || current === "new";
+
   return (
     <main className="min-h-screen px-4 py-10 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-7">
         <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-3"
-            >
-              <FreedaMark className="h-14 w-14" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.36em] text-muted">
-                Freeda
-              </span>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+            <Link href="/" className="inline-flex">
+              <FreedaMark
+                className={
+                  largeBrand ? "h-28 w-28 sm:h-36 sm:w-36" : "h-20 w-20 sm:h-24 sm:w-24"
+                }
+              />
             </Link>
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <Link
+                href="/"
+                className="font-mono text-[10px] uppercase tracking-[0.36em] text-muted"
+              >
+                gofrieda.org
+              </Link>
               <h1 className="font-display text-5xl italic leading-none tracking-tight text-ink sm:text-[3.6rem]">
                 {title}
               </h1>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                {tagline}
+              </p>
               <p className="max-w-lg font-mono text-[12px] leading-6 text-muted">
                 {description}
               </p>

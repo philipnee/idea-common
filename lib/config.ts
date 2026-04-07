@@ -29,7 +29,13 @@ function readOrderedThresholds(defaults: readonly number[]) {
     ordered.push(index === 0 ? value : Math.max(value, previous + 0.001));
   });
 
-  return ordered as readonly [number, number, number, number, number];
+  return [
+    ordered[0] ?? defaults[0],
+    ordered[1] ?? defaults[1],
+    ordered[2] ?? defaults[2],
+    ordered[3] ?? defaults[3],
+    ordered[4] ?? defaults[4]
+  ] as const;
 }
 
 export const appConfig = {

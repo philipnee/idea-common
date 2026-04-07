@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
-  title: "Freeda",
+  title: "Go Frieda",
   description: "A public feed of ideas."
 };
 

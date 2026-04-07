@@ -25,7 +25,8 @@ export default async function HomePage({
   return (
     <SiteShell
       current={sort}
-      title="Freeda"
+      title="Go Frieda"
+      tagline="Put your ideas out there"
       description="Public ideas worth passing around. Post one fast, then light up the ones that deserve more attention."
     >
       <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
