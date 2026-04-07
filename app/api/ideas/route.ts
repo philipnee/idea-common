@@ -3,6 +3,7 @@ import { getPublicIdeaUrl } from "@/lib/config";
 import {
   createIdea,
   getCreateIdeaInput,
+  getIdeaOffset,
   getIdeaPagination,
   getIdeaSort,
   getRemoteIpFromHeaders,
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
   const data = await listIdeas({
     sort: getIdeaSort(searchParams.get("sort")),
     page: getIdeaPagination(searchParams.get("page"), 1),
+    offset: getIdeaOffset(searchParams.get("offset")),
     limit: getIdeaPagination(searchParams.get("limit"), 30)
   });
 

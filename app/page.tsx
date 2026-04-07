@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IdeaCard } from "@/components/idea-card";
+import { IdeaFeed } from "@/components/idea-feed";
 import { SiteShell } from "@/components/site-shell";
 import { listIdeas } from "@/lib/ideas";
 import { joinClasses } from "@/lib/format";
@@ -19,7 +19,8 @@ export default async function HomePage({
   const feed = await listIdeas({
     sort,
     page: Number.isFinite(page) ? page : 1,
-    limit: 18
+    offset: 0,
+    limit: 20
   });
 
   return (
@@ -45,17 +46,14 @@ export default async function HomePage({
             </Link>
           ))}
         </div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-          {feed.ideas.length} loaded
-        </p>
       </section>
 
       {feed.ideas.length ? (
-        <section className="grid gap-3 md:grid-cols-2">
-          {feed.ideas.map((idea) => (
-            <IdeaCard key={idea.id} idea={idea} />
-          ))}
-        </section>
+        <IdeaFeed
+          initialIdeas={feed.ideas}
+          initialHasMore={feed.hasMore}
+          sort={sort}
+        />
       ) : (
         <section className="border border-dashed border-[#d7cab8] bg-card px-6 py-12 text-center shadow-card">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted">
@@ -75,17 +73,6 @@ export default async function HomePage({
           </Link>
         </section>
       )}
-
-      {feed.hasMore ? (
-        <div className="flex justify-center">
-          <Link
-            href={sort === "hot" ? `/?page=${feed.page + 1}` : `/?sort=new&page=${feed.page + 1}`}
-            className="inline-flex border border-[#ddd0bf] bg-[#ebe2d4] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink transition hover:border-[#cdbca7]"
-          >
-            Load more
-          </Link>
-        </div>
-      ) : null}
     </SiteShell>
   );
 }

@@ -232,12 +232,14 @@ function isSuspiciousSubmitter(store: StoreShape, submitKey: string) {
 export async function listIdeas(input: {
   sort?: string;
   page?: number;
+  offset?: number;
   limit?: number;
 }) {
   const store = await readStore();
   const now = Date.now();
   const sort = input.sort === "new" ? "new" : "hot";
   const page = Math.max(Math.floor(input.page ?? 1), 1);
+  const offset = Number.isFinite(input.offset) ? Math.max(Math.floor(input.offset ?? 0), 0) : null;
   const limit = clampLimit(input.limit ?? 30);
   const ideasWithHeat = store.ideas.map((idea) => ({
     idea,
@@ -254,13 +256,14 @@ export async function listIdeas(input: {
 
     return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
   });
-  const start = (page - 1) * limit;
+  const start = offset ?? (page - 1) * limit;
   const ideas = ordered
     .slice(start, start + limit)
     .map(({ idea, heat }) => projectIdea(idea, heat));
 
   return {
     ideas,
+    offset: start,
     page,
     hasMore: start + limit < ordered.length
   };
@@ -548,6 +551,16 @@ export function getIdeaPagination(value: string | null, fallback: number) {
   }
 
   return Math.max(Math.floor(numeric), 1);
+}
+
+export function getIdeaOffset(value: string | null) {
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric)) {
+    return undefined;
+  }
+
+  return Math.max(Math.floor(numeric), 0);
 }
 
 export function getNormalizedIdeaContent(input: { idea: string; details?: string | null }) {

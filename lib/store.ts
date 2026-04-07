@@ -1,9 +1,6 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { env } from "@/lib/env";
 import type { StoreShape } from "@/lib/types";
-
-const TEMPLATE_PATH = path.join(process.cwd(), "data", "store.json");
-const STORE_PATH = path.join(process.cwd(), "data", "runtime-store.json");
 
 const defaultStore: StoreShape = {
   ideas: [],
@@ -13,17 +10,38 @@ const defaultStore: StoreShape = {
 
 let mutationQueue: Promise<unknown> = Promise.resolve();
 
-async function ensureStoreFile() {
-  await mkdir(path.dirname(STORE_PATH), { recursive: true });
+function getStorePaths() {
+  return {
+    storePath: env.storePath,
+    templatePath: env.storeTemplatePath
+  };
+}
+
+async function ensureTemplateFile() {
+  const { templatePath } = getStorePaths();
+  await mkdir(env.storePath.replace(/\/[^/]+$/, ""), { recursive: true });
+  await mkdir(templatePath.replace(/\/[^/]+$/, ""), { recursive: true });
 
   try {
-    await readFile(STORE_PATH, "utf8");
+    await readFile(templatePath, "utf8");
+  } catch {
+    await writeFile(templatePath, JSON.stringify(defaultStore, null, 2), "utf8");
+  }
+}
+
+async function ensureStoreFile() {
+  const { storePath, templatePath } = getStorePaths();
+  await mkdir(storePath.replace(/\/[^/]+$/, ""), { recursive: true });
+  await ensureTemplateFile();
+
+  try {
+    await readFile(storePath, "utf8");
   } catch {
     try {
-      const template = await readFile(TEMPLATE_PATH, "utf8");
-      await writeFile(STORE_PATH, template, "utf8");
+      const template = await readFile(templatePath, "utf8");
+      await writeFile(storePath, template, "utf8");
     } catch {
-      await writeFile(STORE_PATH, JSON.stringify(defaultStore, null, 2), "utf8");
+      await writeFile(storePath, JSON.stringify(defaultStore, null, 2), "utf8");
     }
   }
 }
@@ -45,13 +63,27 @@ function normalizeStore(store: StoreShape): StoreShape {
 
 export async function readStore(): Promise<StoreShape> {
   await ensureStoreFile();
-  const raw = await readFile(STORE_PATH, "utf8");
+  const { storePath } = getStorePaths();
+  const raw = await readFile(storePath, "utf8");
 
   return normalizeStore(JSON.parse(raw) as StoreShape);
 }
 
 async function writeStore(store: StoreShape) {
-  await writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  const { storePath } = getStorePaths();
+  await writeFile(storePath, JSON.stringify(store, null, 2), "utf8");
+}
+
+export async function resetStoreFromTemplate() {
+  const { storePath, templatePath } = getStorePaths();
+  await ensureTemplateFile();
+  await mkdir(env.storePath.replace(/\/[^/]+$/, ""), { recursive: true });
+
+  try {
+    await copyFile(templatePath, storePath);
+  } catch {
+    await writeStore(defaultStore);
+  }
 }
 
 export async function withStoreMutation<T>(

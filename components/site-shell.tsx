@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { DevResetButton } from "@/components/dev-reset-button";
 import { FreedaMark } from "@/components/freeda-mark";
+import { isDevAppMode } from "@/lib/env";
 
 export function SiteShell({
   children,
@@ -15,6 +17,9 @@ export function SiteShell({
   tagline?: string | null;
 }) {
   const largeBrand = current === "hot" || current === "new";
+  const isDevMode = isDevAppMode();
+  const resolvedTitle =
+    isDevMode && title === "Go Frieda" ? "Go Frieda Dev Mode" : title;
 
   return (
     <main className="min-h-screen px-4 py-10 text-ink sm:px-6 lg:px-8">
@@ -44,7 +49,7 @@ export function SiteShell({
             </Link>
             <div className="space-y-3">
               <h1 className="font-display text-5xl italic leading-none tracking-tight text-ink sm:text-[3.6rem]">
-                {title}
+                {resolvedTitle}
               </h1>
               {tagline ? (
                 <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
@@ -57,6 +62,7 @@ export function SiteShell({
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {isDevMode ? <DevResetButton /> : null}
             <Link
               href={current === "post" ? "/" : "/new"}
               className="inline-flex items-center justify-center border border-[#111111] bg-[#111111] px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
