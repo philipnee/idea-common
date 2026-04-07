@@ -1,5 +1,5 @@
 import Image from "next/image";
-import friedaImage from "@/frieda.jpeg";
+import friedaImage from "@/frieda.png";
 import { SiteShell } from "@/components/site-shell";
 
 export default function AboutPage() {
