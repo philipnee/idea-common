@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { customAlphabet } from "nanoid";
+import { appConfig } from "@/lib/config";
 import { isTurnstileConfigured } from "@/lib/env";
+import { verifyIdeaInput } from "@/lib/idea-verification";
 import {
   createContentHash,
   getRemoteIp,
@@ -13,7 +15,7 @@ import type {
   CreateIdeaInput,
   CreateIdeaResult,
   FireIdeaResult,
-  FireState,
+  FireLevel,
   IdeaDetail,
   IdeaRecord,
   IdeaSummary,
@@ -23,9 +25,9 @@ import type {
 
 const generateIdeaId = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 const TEN_MINUTES_MS = 10 * 60 * 1_000;
-const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1_000;
-const FIRE_COOLDOWN_MS = 6 * 60 * 60 * 1_000;
 const ONE_HOUR_MS = 60 * 60 * 1_000;
+const DECAY_WINDOW_MS = appConfig.fire.decayWindowHours * ONE_HOUR_MS;
+const FIRE_COOLDOWN_MS = appConfig.fire.refireCooldownHours * ONE_HOUR_MS;
 
 function clampLimit(value: number) {
   if (!Number.isFinite(value) || value <= 0) {
@@ -47,32 +49,52 @@ function ensureDetailsLength(details: string | null) {
   return details.trim().length <= 2_000;
 }
 
+function normalizeExternalLink(externalLink: string | null) {
+  if (!externalLink) {
+    return null;
+  }
+
+  try {
+    const url = new URL(externalLink.trim());
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
 
-export function getFireState(heat: number): FireState {
-  if (heat >= 9) {
-    return "wildfire";
+export function getFireLevel(heat: number): FireLevel {
+  const [one, two, three, four, five] = appConfig.fire.emojiThresholds;
+
+  if (heat >= five) {
+    return 5;
   }
 
-  if (heat >= 6) {
-    return "blaze";
+  if (heat >= four) {
+    return 4;
   }
 
-  if (heat >= 4) {
-    return "flame";
+  if (heat >= three) {
+    return 3;
   }
 
-  if (heat >= 2.5) {
-    return "spark";
+  if (heat >= two) {
+    return 2;
   }
 
-  if (heat >= 1.5) {
-    return "ember";
+  if (heat >= one) {
+    return 1;
   }
 
-  return "none";
+  return 0;
 }
 
 function calculateLiveHeat(store: StoreShape, ideaId: string, now: number) {

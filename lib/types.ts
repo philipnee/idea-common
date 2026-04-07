@@ -1,15 +1,10 @@
-export type FireState =
-  | "none"
-  | "ember"
-  | "spark"
-  | "flame"
-  | "blaze"
-  | "wildfire";
+export type FireLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface IdeaRecord {
   id: string;
   idea: string;
   details: string | null;
+  externalLink: string | null;
   heat: number;
   fireCount: number;
   submitKey: string;
@@ -52,8 +47,9 @@ export interface IdeaSummary {
   id: string;
   idea: string;
   heat: number;
-  fireState: FireState;
+  fireLevel: FireLevel;
   createdAt: string;
+  externalLink: string | null;
 }
 
 export interface IdeaDetail extends IdeaSummary {
@@ -65,6 +61,7 @@ export interface IdeaDetail extends IdeaSummary {
 export interface CreateIdeaInput {
   idea: string;
   details?: string | null;
+  externalLink?: string | null;
   postToken: string;
   website?: string | null;
   turnstileToken?: string | null;
@@ -82,6 +79,6 @@ export interface FireIdeaResult {
   ok: boolean;
   status: number;
   cooldownActive?: boolean;
-  fireState?: FireState;
+  fireLevel?: FireLevel;
   nextFireAt?: string | null;
 }

@@ -28,11 +28,26 @@ async function ensureStoreFile() {
   }
 }
 
+function normalizeStore(store: StoreShape): StoreShape {
+  return {
+    ...store,
+    ideas: (store.ideas ?? []).map((idea) => ({
+      ...idea,
+      externalLink:
+        typeof idea.externalLink === "string" && idea.externalLink
+          ? idea.externalLink
+          : null
+    })),
+    fires: store.fires ?? [],
+    postAttempts: store.postAttempts ?? []
+  };
+}
+
 export async function readStore(): Promise<StoreShape> {
   await ensureStoreFile();
   const raw = await readFile(STORE_PATH, "utf8");
 
-  return JSON.parse(raw) as StoreShape;
+  return normalizeStore(JSON.parse(raw) as StoreShape);
 }
 
 async function writeStore(store: StoreShape) {
