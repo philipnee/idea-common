@@ -28,23 +28,26 @@ export default async function IdeaDetailPage({
   const wasJustPosted = searchParams?.posted === "true";
 
   return (
-    <SiteShell>
+    <SiteShell
+      title="Idea"
+      description="A single public idea. Fire it now, and you can fire it again in six hours."
+    >
       <div className="flex">
         <Link
           href="/"
-          className="inline-flex rounded-full border border-line bg-card px-4 py-2 text-sm text-muted transition hover:border-ink/20 hover:text-ink"
+          className="inline-flex border border-[#ddd0bf] bg-[#ebe2d4] px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted transition hover:text-ink"
         >
           Back to feed
         </Link>
       </div>
 
       {wasJustPosted ? (
-        <div className="rounded-[22px] border border-orange-200 bg-orange-50 px-5 py-4 text-sm text-orange-800">
+        <div className="border border-[#dcc8b2] bg-[#f1e6d8] px-5 py-4 font-mono text-[11px] uppercase tracking-[0.16em] text-[#87572a]">
           Your idea is live.
         </div>
       ) : null}
 
-      <article className="rounded-[30px] border border-line bg-card px-5 py-6 shadow-card sm:px-8 sm:py-8">
+      <article className="border border-[#e1d5c5] bg-card px-5 py-6 shadow-card sm:px-8 sm:py-8">
         <div className="flex flex-col gap-6">
           <div className="flex flex-wrap items-center gap-3">
             <FirePill
@@ -57,11 +60,11 @@ export default async function IdeaDetailPage({
           </div>
 
           <div className="space-y-4">
-            <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            <h2 className="max-w-3xl font-mono text-[26px] leading-tight tracking-[-0.01em] sm:text-[31px]">
               {idea.idea}
             </h2>
             {idea.details ? (
-              <div className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted">
+              <div className="max-w-3xl whitespace-pre-wrap text-[15px] leading-8 text-muted">
                 {idea.details}
               </div>
             ) : null}

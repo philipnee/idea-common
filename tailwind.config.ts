@@ -9,24 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#f8f3ea",
-        card: "#fffdf8",
-        ink: "#181511",
-        muted: "#70655a",
-        line: "#dfd5c8",
-        accent: "#e1662a",
-        glow: "#bf4a13"
+        bg: "#f4eee4",
+        card: "#e9dfcf",
+        ink: "#40352e",
+        muted: "#8b7a6d",
+        line: "#dfd2c1",
+        accent: "#c47838",
+        glow: "#9a4c1b"
       },
       boxShadow: {
-        card: "0 10px 30px rgba(24, 21, 17, 0.08)"
+        card: "0 1px 0 rgba(64, 53, 46, 0.06)"
       },
       fontFamily: {
         sans: [
-          "system-ui",
+          "\"Iowan Old Style\"",
+          "\"Palatino Linotype\"",
+          "\"Book Antiqua\"",
+          "Georgia",
           "sans-serif"
         ],
+        display: [
+          "\"Iowan Old Style\"",
+          "\"Palatino Linotype\"",
+          "\"Book Antiqua\"",
+          "Georgia",
+          "serif"
+        ],
         mono: [
-          "\"IBM Plex Mono\"",
           "\"SFMono-Regular\"",
           "ui-monospace",
           "monospace"
@@ -38,4 +47,3 @@ const config: Config = {
 };
 
 export default config;
-

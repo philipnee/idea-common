@@ -74,10 +74,10 @@ export function FireButton({
         onClick={handleFire}
         disabled={!canFire || isPending}
         className={joinClasses(
-          "inline-flex min-w-48 items-center justify-center rounded-full border px-5 py-3 text-sm font-medium transition",
+          "inline-flex min-w-48 items-center justify-center border px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] transition",
           !canFire
-            ? "border-orange-300 bg-orange-100 text-orange-800"
-            : "border-ink bg-ink text-white hover:bg-black",
+            ? "border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
+            : "border-[#111111] bg-[#111111] text-white hover:bg-black",
           isPending && "cursor-wait opacity-80"
         )}
       >

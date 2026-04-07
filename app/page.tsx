@@ -23,17 +23,21 @@ export default async function HomePage({
   });
 
   return (
-    <SiteShell current={sort}>
+    <SiteShell
+      current={sort}
+      title="Ideas"
+      description="Browse what people want built. Post one fast. Fire the ones that deserve more momentum."
+    >
       <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
-        <div className="inline-flex w-fit rounded-full border border-line bg-card p-1 shadow-card">
+        <div className="inline-flex w-fit border border-[#ddd0bf] bg-[#ebe2d4] p-1 shadow-card">
           {(["hot", "new"] as const).map((tab) => (
             <Link
               key={tab}
               href={tab === "hot" ? "/" : "/?sort=new"}
               className={joinClasses(
-                "rounded-full px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] transition",
+                "px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] transition",
                 sort === tab
-                  ? "bg-ink text-white"
+                  ? "bg-[#111111] text-white"
                   : "text-muted hover:text-ink"
               )}
             >
@@ -47,25 +51,25 @@ export default async function HomePage({
       </section>
 
       {feed.ideas.length ? (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-3 md:grid-cols-2">
           {feed.ideas.map((idea) => (
             <IdeaCard key={idea.id} idea={idea} />
           ))}
         </section>
       ) : (
-        <section className="rounded-[28px] border border-dashed border-line bg-card/75 px-6 py-12 text-center shadow-card">
+        <section className="border border-dashed border-[#d7cab8] bg-card px-6 py-12 text-center shadow-card">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted">
             Empty feed
           </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-3 font-display text-4xl italic tracking-tight">
             The first idea is still up for grabs.
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted sm:text-base">
+          <p className="mx-auto mt-3 max-w-xl font-mono text-[12px] leading-6 text-muted">
             Post one short idea and it lands in the public feed immediately.
           </p>
           <Link
             href="/new"
-            className="mt-6 inline-flex rounded-full border border-ink bg-ink px-5 py-3 text-sm font-medium text-white transition hover:bg-black"
+            className="mt-6 inline-flex border border-[#111111] bg-[#111111] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
           >
             Post the first one
           </Link>
@@ -76,7 +80,7 @@ export default async function HomePage({
         <div className="flex justify-center">
           <Link
             href={sort === "hot" ? `/?page=${feed.page + 1}` : `/?sort=new&page=${feed.page + 1}`}
-            className="inline-flex rounded-full border border-line bg-card px-5 py-3 text-sm font-medium text-ink transition hover:border-ink/30 hover:bg-white"
+            className="inline-flex border border-[#ddd0bf] bg-[#ebe2d4] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink transition hover:border-[#cdbca7]"
           >
             Load more
           </Link>
@@ -85,4 +89,3 @@ export default async function HomePage({
     </SiteShell>
   );
 }
-
