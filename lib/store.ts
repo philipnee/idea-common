@@ -2,7 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { StoreShape } from "@/lib/types";
 
-const STORE_PATH = path.join(process.cwd(), "data", "store.json");
+const TEMPLATE_PATH = path.join(process.cwd(), "data", "store.json");
+const STORE_PATH = path.join(process.cwd(), "data", "runtime-store.json");
 
 const defaultStore: StoreShape = {
   ideas: [],
@@ -18,7 +19,12 @@ async function ensureStoreFile() {
   try {
     await readFile(STORE_PATH, "utf8");
   } catch {
-    await writeFile(STORE_PATH, JSON.stringify(defaultStore, null, 2), "utf8");
+    try {
+      const template = await readFile(TEMPLATE_PATH, "utf8");
+      await writeFile(STORE_PATH, template, "utf8");
+    } catch {
+      await writeFile(STORE_PATH, JSON.stringify(defaultStore, null, 2), "utf8");
+    }
   }
 }
 
@@ -51,4 +57,3 @@ export async function withStoreMutation<T>(
 
   return resultPromise;
 }
-
