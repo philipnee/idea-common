@@ -5,14 +5,14 @@ export function SiteShell({
   children,
   current = "hot",
   title = "Go Frieda",
-  description = "Public ideas worth passing around. Post one fast, then light up the ones that deserve more attention.",
-  tagline = "Put your ideas out there"
+  description = "Public ideas worth passing around. Post one fast, then back the ones that deserve more attention.",
+  tagline
 }: {
   children: React.ReactNode;
   current?: "hot" | "new" | "post";
   title?: string;
   description?: string;
-  tagline?: string;
+  tagline?: string | null;
 }) {
   const largeBrand = current === "hot" || current === "new";
 
@@ -38,9 +38,11 @@ export function SiteShell({
               <h1 className="font-display text-5xl italic leading-none tracking-tight text-ink sm:text-[3.6rem]">
                 {title}
               </h1>
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-                {tagline}
-              </p>
+              {tagline ? (
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                  {tagline}
+                </p>
+              ) : null}
               <p className="max-w-lg font-mono text-[12px] leading-6 text-muted">
                 {description}
               </p>

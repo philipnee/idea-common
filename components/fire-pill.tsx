@@ -14,7 +14,7 @@ export function FirePill({
 
   return (
     <span
-      aria-label={`${fireLevel} fires`}
+      aria-label={`${fireLevel} ${fireLevel === 1 ? "dog" : "dogs"}`}
       className={joinClasses(
         "inline-flex items-center gap-1 border px-3 py-1 font-mono tracking-[0.12em]",
         small ? "text-[10px]" : "text-[12px]",
@@ -27,7 +27,7 @@ export function FirePill({
     >
       {Array.from({ length: fireLevel }, (_, index) => (
         <span key={index} className="leading-none">
-          🔥
+          🐶
         </span>
       ))}
     </span>

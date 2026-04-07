@@ -71,7 +71,7 @@ export function FireButton({
       };
 
       if (!response.ok) {
-        setError("Could not fire this idea right now.");
+        setError("Could not back this idea right now.");
         return;
       }
 
@@ -87,10 +87,10 @@ export function FireButton({
         type="button"
         onClick={handleFire}
         disabled={!canFire || isPending}
-        aria-label={canFire ? "Fire this idea" : "Fire cooling down"}
+        aria-label={canFire ? "Back this idea" : "Reaction cooling down"}
         title={
           canFire
-            ? "Fire this idea"
+            ? "Back this idea"
             : `Available again at ${formatNextFire(nextFireAt) ?? "later"}`
         }
         className={joinClasses(
@@ -101,7 +101,7 @@ export function FireButton({
           isPending && "cursor-wait opacity-80"
         )}
       >
-        <span aria-hidden="true">🔥</span>
+        <span aria-hidden="true">🐶</span>
       </button>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>

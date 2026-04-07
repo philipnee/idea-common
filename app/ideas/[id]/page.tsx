@@ -33,7 +33,7 @@ export default async function IdeaDetailPage({
   return (
     <SiteShell
       title="Idea"
-      description="A single public idea. Share it around, then come back later and fire it again."
+      description="A single public idea. Share it around, then come back later and back it again."
     >
       <div className="flex">
         <Link
