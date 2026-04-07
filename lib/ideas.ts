@@ -51,45 +51,66 @@ function nowIso() {
 }
 
 export function getFireState(heat: number): FireState {
-  if (heat >= 5) {
-    return "on_fire";
+  if (heat >= 9) {
+    return "wildfire";
   }
 
-  if (heat >= 2) {
-    return "hot";
+  if (heat >= 6) {
+    return "blaze";
   }
 
-  if (heat >= 0.5) {
-    return "warm";
+  if (heat >= 4) {
+    return "flame";
+  }
+
+  if (heat >= 2.5) {
+    return "spark";
+  }
+
+  if (heat >= 1.5) {
+    return "ember";
   }
 
   return "none";
 }
 
-function recentFiresCount(store: StoreShape, ideaId: string, now: number) {
-  const cutoff = now - TWENTY_FOUR_HOURS_MS;
+function calculateLiveHeat(store: StoreShape, ideaId: string, now: number) {
+  let heat = 0;
 
-  return store.fires.filter((fire) => {
-    return fire.ideaId === ideaId && Date.parse(fire.createdAt) >= cutoff;
-  }).length;
+  for (const fire of store.fires) {
+    if (fire.ideaId !== ideaId) {
+      continue;
+    }
+
+    const ageMs = now - Date.parse(fire.createdAt);
+
+    if (ageMs < 0 || ageMs >= TWENTY_FOUR_HOURS_MS) {
+      continue;
+    }
+
+    heat += 1 - ageMs / TWENTY_FOUR_HOURS_MS;
+  }
+
+  return Number(heat.toFixed(4));
 }
 
-function projectIdea(idea: IdeaRecord): IdeaSummary {
+function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
   return {
     id: idea.id,
     idea: idea.idea,
-    heat: idea.heat,
-    fireState: getFireState(idea.heat),
+    heat,
+    fireState: getFireState(heat),
     createdAt: idea.createdAt
   };
 }
 
 function projectIdeaDetail(
   idea: IdeaRecord,
-  viewerHasFired: boolean
+  viewerHasFired: boolean,
+  heat: number
 ): IdeaDetail {
   return {
-    ...projectIdea(idea),
+    ...projectIdea(idea, heat),
     details: idea.details,
     viewerHasFired
   };
@@ -139,22 +160,29 @@ export async function listIdeas(input: {
   limit?: number;
 }) {
   const store = await readStore();
+  const now = Date.now();
   const sort = input.sort === "new" ? "new" : "hot";
   const page = Math.max(Math.floor(input.page ?? 1), 1);
   const limit = clampLimit(input.limit ?? 30);
-  const ordered = [...store.ideas].sort((a, b) => {
+  const ideasWithHeat = store.ideas.map((idea) => ({
+    idea,
+    heat: calculateLiveHeat(store, idea.id, now)
+  }));
+  const ordered = ideasWithHeat.sort((a, b) => {
     if (sort === "new") {
-      return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+      return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
     }
 
     if (b.heat !== a.heat) {
       return b.heat - a.heat;
     }
 
-    return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
   });
   const start = (page - 1) * limit;
-  const ideas = ordered.slice(start, start + limit).map(projectIdea);
+  const ideas = ordered
+    .slice(start, start + limit)
+    .map(({ idea, heat }) => projectIdea(idea, heat));
 
   return {
     ideas,
@@ -174,8 +202,9 @@ export async function getIdeaById(id: string, viewerKey: string) {
   const viewerHasFired = store.fires.some((fire) => {
     return fire.ideaId === id && fire.userFingerprint === viewerKey;
   });
+  const heat = calculateLiveHeat(store, id, Date.now());
 
-  return projectIdeaDetail(idea, viewerHasFired);
+  return projectIdeaDetail(idea, viewerHasFired, heat);
 }
 
 export async function getPostingContext(submitKey: string) {
@@ -329,11 +358,14 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
     });
 
     if (existingFire) {
+      const heat = calculateLiveHeat(store, id, Date.now());
+      idea.heat = heat;
+
       return {
         ok: true,
         status: 200,
         alreadyFired: true,
-        fireState: getFireState(idea.heat)
+        fireState: getFireState(heat)
       };
     }
 
@@ -346,9 +378,7 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
 
     idea.fireCount += 1;
     idea.updatedAt = nowIso();
-
-    const recentCount = recentFiresCount(store, id, Date.now());
-    idea.heat = Math.max(idea.heat, Math.log2(1 + recentCount));
+    idea.heat = calculateLiveHeat(store, id, Date.now());
 
     return {
       ok: true,
@@ -364,8 +394,7 @@ export async function recalculateHeat() {
     const now = Date.now();
 
     for (const idea of store.ideas) {
-      const recentCount = recentFiresCount(store, idea.id, now);
-      idea.heat = Number((0.3 * idea.heat + Math.log2(1 + recentCount)).toFixed(4));
+      idea.heat = calculateLiveHeat(store, idea.id, now);
       idea.updatedAt = nowIso();
     }
 
@@ -416,4 +445,3 @@ export function getIdeaPagination(value: string | null, fallback: number) {
 export function getNormalizedIdeaContent(input: { idea: string; details?: string | null }) {
   return normalizeIdeaContent(input);
 }
-

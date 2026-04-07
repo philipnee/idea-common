@@ -1,4 +1,10 @@
-export type FireState = "none" | "warm" | "hot" | "on_fire";
+export type FireState =
+  | "none"
+  | "ember"
+  | "spark"
+  | "flame"
+  | "blaze"
+  | "wildfire";
 
 export interface IdeaRecord {
   id: string;
@@ -77,4 +83,3 @@ export interface FireIdeaResult {
   alreadyFired?: boolean;
   fireState?: FireState;
 }
-

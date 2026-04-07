@@ -4,9 +4,11 @@ import type { FireState } from "@/lib/types";
 
 const labels: Record<FireState, string> = {
   none: "",
-  warm: "Warm",
-  hot: "Hot",
-  on_fire: "On Fire"
+  ember: "Ember",
+  spark: "Spark",
+  flame: "Flame",
+  blaze: "Blaze",
+  wildfire: "Wildfire"
 };
 
 export function FirePill({
@@ -25,25 +27,26 @@ export function FirePill({
   return (
     <span
       className={joinClasses(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono uppercase tracking-[0.16em]",
+        "inline-flex items-center gap-2 border px-3 py-1 font-mono uppercase tracking-[0.16em]",
         small ? "text-[10px]" : "text-[11px]",
-        fireState === "warm" &&
-          "border-orange-200 bg-orange-50 text-orange-700",
-        fireState === "hot" && "border-orange-300 bg-orange-100 text-orange-800",
-        fireState === "on_fire" &&
-          "border-red-300 bg-red-100 text-red-800 shadow-[0_0_0_4px_rgba(225,102,42,0.12)]"
+        fireState === "ember" && "border-[#dcc8a8] bg-[#f5ece0] text-[#9a6a2d]",
+        fireState === "spark" && "border-[#d5bf99] bg-[#efe4d1] text-[#9a6126]",
+        fireState === "flame" && "border-[#d1b087] bg-[#ead8bc] text-[#94471c]",
+        fireState === "blaze" && "border-[#c69773] bg-[#e4ccb2] text-[#893817]",
+        fireState === "wildfire" && "border-[#b98566] bg-[#ddc0ab] text-[#7a2810]"
       )}
     >
       <span
         className={joinClasses(
           "h-2 w-2 rounded-full",
-          fireState === "warm" && "bg-orange-500",
-          fireState === "hot" && "bg-orange-600",
-          fireState === "on_fire" && "bg-red-600"
+          fireState === "ember" && "bg-[#d19134]",
+          fireState === "spark" && "bg-[#c7712c]",
+          fireState === "flame" && "bg-[#c14d1d]",
+          fireState === "blaze" && "bg-[#a83c15]",
+          fireState === "wildfire" && "bg-[#8d2512]"
         )}
       />
       {labels[fireState]}
     </span>
   );
 }
-
