@@ -1,59 +1,14 @@
+import Image from "next/image";
+import friedaImage from "@/frieda.jpeg";
 import { joinClasses } from "@/lib/format";
 
 export function FreedaMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 96 96"
-      aria-hidden="true"
-      className={joinClasses("shrink-0", className)}
-    >
-      <rect x="4" y="4" width="88" height="88" rx="24" fill="#efe4d2" />
-      <path
-        d="M67 24c7 4 12 11 12 19 0 14-11 27-27 31-14 3-28-2-36-13 3 2 7 3 10 2-6-8-7-18-2-27 7-12 22-19 35-17l8 5Z"
-        fill="#bc6928"
-      />
-      <path
-        d="M63 22c9 5 14 14 13 24-2 12-11 23-24 28-10 4-21 3-30-2 10 1 20-2 28-8 9-7 15-19 13-29Z"
-        fill="#d88638"
-      />
-      <path
-        d="M36 34c-8 5-14 13-14 22 0 5 2 10 6 14l1-6c7 0 15-3 21-8 6-5 10-11 12-18l-7-6c-7-1-14 0-19 2Z"
-        fill="#c7742f"
-      />
-      <path
-        d="M27 52c3-6 8-10 15-13 2 7-2 15-9 20-5 4-11 6-17 5 3-3 7-7 11-12Z"
-        fill="#96501d"
-      />
-      <path
-        d="M49 36c4 1 8 4 10 8 2 5 1 10-1 14-4 7-13 12-22 12 5-2 9-5 12-9-6 1-11 0-15-3 3-1 7-3 11-7 3-3 5-8 5-15Z"
-        fill="#e19a50"
-      />
-      <path
-        d="M53 37c5 2 8 6 9 11 1 7-2 13-8 18-5 4-11 6-17 6 7-3 12-8 14-13-4 1-8 0-11-2 3-1 7-4 10-8 2-3 4-7 3-12Z"
-        fill="#f0b060"
-      />
-      <path
-        d="M66 31c7 1 11 6 11 13 0 7-5 13-12 18l-2-6c2-4 2-9 0-13-2-4-4-8-7-10 3-2 6-3 10-2Z"
-        fill="#a85422"
-      />
-      <path
-        d="M32 66c9 3 20 1 29-4l9 8-7 10H37l-7-10 2-4Z"
-        fill="#c8282a"
-      />
-      <path
-        d="M44 73h18l-2 4H46l-2-4Z"
-        fill="#7a1d1e"
-      />
-      <path
-        d="M25 55c4 0 8 1 11 3-4 4-9 6-15 5-2 0-3-2-3-4s3-4 7-4Z"
-        fill="#5a3528"
-      />
-      <circle cx="45" cy="43" r="2.5" fill="#2c1a15" />
-      <circle cx="44.2" cy="42.4" r="0.8" fill="#fff6ed" />
-      <path
-        d="M30 57c5 2 10 1 14-1-2 4-7 7-13 7-4 0-7-1-10-3 3-2 6-3 9-3Z"
-        fill="#3a241c"
-      />
-    </svg>
+    <Image
+      src={friedaImage}
+      alt="Frieda dog mark"
+      priority
+      className={joinClasses("h-auto w-auto", className)}
+    />
   );
 }
