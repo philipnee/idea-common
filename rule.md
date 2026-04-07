@@ -1,28 +1,31 @@
 # Repo Rules
 
-All coding agents must read this file before making any repo change.
+All coding agents must read this file first before making any repo change.
 
-After reading this file, read the latest relevant `build-*.md` spec before implementation work. The current baseline spec is `build-00.md`.
+This file is the only root entry point for agent instructions.
+
+After reading this file, read the latest relevant spec in `docs/build-*.md` before implementation work. The current baseline spec is `docs/build-00.md`.
 
 ## 1. Commit Rule
 
 - Every change made by a coding agent must be committed immediately.
 - Commit even if the change is incomplete or broken.
-- Every agent-authored commit message must start with `[codex]`.
-- Example: `[codex] add repo rules`
+- Every agent-authored commit message must start with that agent's name in brackets.
+- Examples: `[codex] add repo rules`, `[claude] update login flow`
 
 ## 2. Spec Rule
 
-- `build-*.md` files are the product spec and build-history source of truth.
+- `docs/build-*.md` files are the product spec and build-history source of truth.
+- Keep `rule.md` as the only instruction entry point at the repo root.
 - Do not replace an existing spec snapshot when the spec changes.
-- When the spec changes, create a new `build-*.md` file instead of rewriting the old one.
+- When the spec changes, create a new `docs/build-*.md` file instead of rewriting the old one.
 - Follow the naming/versioning direction recorded in the current spec file.
-- `build-00.md` explicitly says the next amendment should be `build-v1-01.md`.
+- `docs/build-00.md` says the next amendment should be `build-v1-01.md`, so the next spec file path should be `docs/build-v1-01.md`.
 - Each new spec file should carry its own version metadata and changelog entry so prior specs remain intact.
 
 ## 3. Required Order
 
 1. Read `rule.md`.
-2. Read the latest applicable `build-*.md`.
+2. Read the latest applicable `docs/build-*.md`.
 3. Make the change.
-4. Commit the change with a `[codex] ...` message.
+4. Commit the change with a `[agent-name] ...` message.
