@@ -1,8 +1,26 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import Image from "next/image";
 import friedaImage from "@/frieda.png";
 import { SiteShell } from "@/components/site-shell";
 
-export default function AboutPage() {
+async function getAboutCopy() {
+  const filePath = path.join(process.cwd(), "content", "about.txt");
+  const raw = await readFile(filePath, "utf8");
+  const sections = raw
+    .split(/\n\s*\n/)
+    .map((section) => section.trim())
+    .filter(Boolean);
+
+  return {
+    headline: sections[0] ?? "About Frieda",
+    paragraphs: sections.slice(1)
+  };
+}
+
+export default async function AboutPage() {
+  const copy = await getAboutCopy();
+
   return (
     <SiteShell
       title="About"
@@ -23,23 +41,12 @@ export default function AboutPage() {
               Frieda
             </p>
             <h2 className="font-display text-4xl italic leading-tight tracking-tight text-ink">
-              This is my sister&apos;s golden retriever.
+              {copy.headline}
             </h2>
             <div className="space-y-4 text-[15px] leading-8 text-muted">
-              <p>
-                Golden retrievers are good at finding things. Balls, sticks,
-                missing gloves, the exact patch of sunlight on the floor. Frieda
-                feels like the same kind of energy for ideas.
-              </p>
-              <p>
-                Go Frieda is a place to put rough ideas where other people can
-                notice them. Post one line, add details if they matter, and let
-                the good ones pick up a little momentum.
-              </p>
-              <p>
-                The point is not polish. The point is to get the idea out of
-                your head, into public view, and see if it starts to move.
-              </p>
+              {copy.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
           </div>
         </section>
