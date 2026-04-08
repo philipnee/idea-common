@@ -1,5 +1,6 @@
 export type FireLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export type IdeaTagSource = "ai" | "fallback" | "mixed" | "seed";
+export type IdeaSort = "all" | "hot" | "new";
 
 export interface IdeaRecord {
   id: string;

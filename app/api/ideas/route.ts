@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
     sort: getIdeaSort(searchParams.get("sort")),
     page: getIdeaPagination(searchParams.get("page"), 1),
     offset: getIdeaOffset(searchParams.get("offset")),
-    limit: getIdeaPagination(searchParams.get("limit"), 30)
+    limit: getIdeaPagination(searchParams.get("limit"), 30),
+    seed: searchParams.get("seed") ?? undefined
   });
 
   return NextResponse.json(data);

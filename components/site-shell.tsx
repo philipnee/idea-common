@@ -5,18 +5,18 @@ import { isDevAppMode } from "@/lib/env";
 
 export function SiteShell({
   children,
-  current = "hot",
+  current = "all",
   title = "Litboard",
   description = "Public ideas worth passing around. Post one fast, then light the ones that deserve more attention.",
   tagline
 }: {
   children: React.ReactNode;
-  current?: "hot" | "new" | "post";
+  current?: "all" | "hot" | "new" | "post";
   title?: string;
   description?: string;
   tagline?: string | null;
 }) {
-  const largeBrand = current === "hot" || current === "new";
+  const largeBrand = current === "all" || current === "hot" || current === "new";
   const isDevMode = isDevAppMode();
   const resolvedTitle =
     isDevMode && title === "Litboard" ? "Litboard Dev mode" : title;

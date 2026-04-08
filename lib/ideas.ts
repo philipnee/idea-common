@@ -20,6 +20,7 @@ import type {
   FireLevel,
   IdeaDetail,
   IdeaRecord,
+  IdeaSort,
   IdeaSummary,
   PostAttemptRecord,
   StoreShape
@@ -194,6 +195,122 @@ function getContributionDelta(previousCount: number, nextCount: number, weight =
   );
 }
 
+function compareIdeasByHot(
+  a: { idea: IdeaRecord; heat: number },
+  b: { idea: IdeaRecord; heat: number }
+) {
+  if (b.heat !== a.heat) {
+    return b.heat - a.heat;
+  }
+
+  return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
+}
+
+function compareIdeasByNew(
+  a: { idea: IdeaRecord; heat: number },
+  b: { idea: IdeaRecord; heat: number }
+) {
+  return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
+}
+
+function hashSeed(input: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+function createSeededRandom(seed: string) {
+  let state = hashSeed(seed) || 0x9e3779b9;
+
+  return () => {
+    state += 0x6d2b79f5;
+    let next = state;
+    next = Math.imul(next ^ (next >>> 15), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleWithSeed<T>(items: T[], seed: string) {
+  const shuffled = [...items];
+  const random = createSeededRandom(seed);
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+function buildMixedIdeaOrder(
+  ideasWithHeat: Array<{ idea: IdeaRecord; heat: number }>,
+  seed: string
+) {
+  const hotQueue = [...ideasWithHeat].sort(compareIdeasByHot);
+  const newQueue = [...ideasWithHeat].sort(compareIdeasByNew);
+  const randomQueue = shuffleWithSeed(ideasWithHeat, `${seed}:random`);
+  const pattern = shuffleWithSeed(
+    ["hot", "new", "random", "random", "random", "random", "random", "random", "random", "random"] as const,
+    `${seed}:pattern`
+  );
+  const queues = {
+    hot: hotQueue,
+    new: newQueue,
+    random: randomQueue
+  };
+  const cursors = {
+    hot: 0,
+    new: 0,
+    random: 0
+  };
+  const seen = new Set<string>();
+  const mixed: Array<{ idea: IdeaRecord; heat: number }> = [];
+
+  function takeNext(source: keyof typeof queues) {
+    const queue = queues[source];
+    let cursor = cursors[source];
+
+    while (cursor < queue.length) {
+      const candidate = queue[cursor];
+      cursor += 1;
+
+      if (seen.has(candidate.idea.id)) {
+        continue;
+      }
+
+      cursors[source] = cursor;
+      seen.add(candidate.idea.id);
+      return candidate;
+    }
+
+    cursors[source] = cursor;
+    return null;
+  }
+
+  while (mixed.length < ideasWithHeat.length) {
+    const preferred = pattern[mixed.length % pattern.length] ?? "random";
+    const candidate =
+      takeNext(preferred) ??
+      takeNext("random") ??
+      takeNext("hot") ??
+      takeNext("new");
+
+    if (!candidate) {
+      break;
+    }
+
+    mixed.push(candidate);
+  }
+
+  return mixed;
+}
+
 export function getFireLevel(heat: number): FireLevel {
   const [one, two, three, four, five] = appConfig.fire.emojiThresholds;
 
@@ -336,14 +453,16 @@ function isSuspiciousSubmitter(store: StoreShape, submitKey: string) {
 }
 
 export async function listIdeas(input: {
-  sort?: string;
+  sort?: IdeaSort | string;
   page?: number;
   offset?: number;
   limit?: number;
+  seed?: string;
 }) {
   const store = await readStore();
   const todayKey = getTodayKey();
-  const sort = input.sort === "new" ? "new" : "hot";
+  const sort = getIdeaSort(typeof input.sort === "string" ? input.sort : null);
+  const seed = sort === "all" ? input.seed?.trim() || randomUUID() : null;
   const page = Math.max(Math.floor(input.page ?? 1), 1);
   const offset = Number.isFinite(input.offset) ? Math.max(Math.floor(input.offset ?? 0), 0) : null;
   const limit = clampLimit(input.limit ?? 30);
@@ -351,17 +470,10 @@ export async function listIdeas(input: {
     idea,
     heat: computeIdeaHeatForDay(idea, store, todayKey)
   }));
-  const ordered = ideasWithHeat.sort((a, b) => {
-    if (sort === "new") {
-      return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
-    }
-
-    if (b.heat !== a.heat) {
-      return b.heat - a.heat;
-    }
-
-    return Date.parse(b.idea.createdAt) - Date.parse(a.idea.createdAt);
-  });
+  const ordered =
+    sort === "all"
+      ? buildMixedIdeaOrder(ideasWithHeat, seed ?? randomUUID())
+      : [...ideasWithHeat].sort(sort === "new" ? compareIdeasByNew : compareIdeasByHot);
   const start = offset ?? (page - 1) * limit;
   const ideas = ordered
     .slice(start, start + limit)
@@ -371,7 +483,8 @@ export async function listIdeas(input: {
     ideas,
     offset: start,
     page,
-    hasMore: start + limit < ordered.length
+    hasMore: start + limit < ordered.length,
+    seed
   };
 }
 
@@ -700,8 +813,16 @@ export function getRemoteIpFromHeaders(headers: Headers) {
   return getRemoteIp(headers);
 }
 
-export function getIdeaSort(sortValue: string | null) {
-  return sortValue === "new" ? "new" : "hot";
+export function getIdeaSort(sortValue: string | null): IdeaSort {
+  if (sortValue === "new") {
+    return "new";
+  }
+
+  if (sortValue === "lit" || sortValue === "hot") {
+    return "hot";
+  }
+
+  return "all";
 }
 
 export function getIdeaPagination(value: string | null, fallback: number) {

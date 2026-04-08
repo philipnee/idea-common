@@ -2,17 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { IdeaCard } from "@/components/idea-card";
-import type { IdeaSummary } from "@/lib/types";
+import type { IdeaSort, IdeaSummary } from "@/lib/types";
 
 export function IdeaFeed({
   initialIdeas,
   initialHasMore,
+  initialSeed,
   sort,
   showDevTags
 }: {
   initialIdeas: IdeaSummary[];
   initialHasMore: boolean;
-  sort: "hot" | "new";
+  initialSeed?: string | null;
+  sort: IdeaSort;
   showDevTags: boolean;
 }) {
   const [ideas, setIdeas] = useState(initialIdeas);
@@ -26,7 +28,7 @@ export function IdeaFeed({
     setHasMore(initialHasMore);
     setIsLoading(false);
     setLoadError("");
-  }, [initialHasMore, initialIdeas, sort]);
+  }, [initialHasMore, initialIdeas, initialSeed, sort]);
 
   async function loadMore() {
     if (isLoading || !hasMore) {
@@ -42,6 +44,11 @@ export function IdeaFeed({
         offset: String(ideas.length),
         limit: "5"
       });
+
+      if (sort === "all" && initialSeed) {
+        search.set("seed", initialSeed);
+      }
+
       const response = await fetch(`/api/ideas?${search.toString()}`, {
         method: "GET",
         cache: "no-store"

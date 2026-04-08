@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/site-shell";
 import { isDevAppMode } from "@/lib/env";
 import { listIdeas } from "@/lib/ideas";
 import { joinClasses } from "@/lib/format";
+import type { IdeaSort } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ export default async function HomePage({
     page?: string;
   };
 }) {
-  const sort = searchParams?.sort === "new" ? "new" : "hot";
+  const rawSort = searchParams?.sort ?? null;
+  const sort: IdeaSort =
+    rawSort === "new" ? "new" : rawSort === "lit" || rawSort === "hot" ? "hot" : "all";
   const page = Number(searchParams?.page ?? "1");
   const showDevTags = isDevAppMode();
   const feed = await listIdeas({
@@ -33,18 +36,22 @@ export default async function HomePage({
     >
       <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
         <div className="inline-flex w-fit border border-[#ddd0bf] bg-[#ebe2d4] p-1 shadow-card">
-          {(["hot", "new"] as const).map((tab) => (
+          {([
+            { value: "all", label: "All", href: "/" },
+            { value: "hot", label: "Lit", href: "/?sort=lit" },
+            { value: "new", label: "New", href: "/?sort=new" }
+          ] as const).map((tab) => (
             <Link
-              key={tab}
-              href={tab === "hot" ? "/" : "/?sort=new"}
+              key={tab.value}
+              href={tab.href}
               className={joinClasses(
                 "px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] transition",
-                sort === tab
+                sort === tab.value
                   ? "bg-[#111111] text-white"
                   : "text-muted hover:text-ink"
               )}
             >
-              {tab}
+              {tab.label}
             </Link>
           ))}
         </div>
@@ -54,6 +61,7 @@ export default async function HomePage({
         <IdeaFeed
           initialIdeas={feed.ideas}
           initialHasMore={feed.hasMore}
+          initialSeed={feed.seed}
           sort={sort}
           showDevTags={showDevTags}
         />
