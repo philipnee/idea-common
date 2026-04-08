@@ -1,6 +1,14 @@
 import { joinClasses } from "@/lib/format";
 import type { FireLevel } from "@/lib/types";
 
+const fireLevelNames: Record<Exclude<FireLevel, 0>, string> = {
+  1: "Ember",
+  2: "Spark",
+  3: "Flame",
+  4: "Blaze",
+  5: "Supernova"
+};
+
 export function FirePill({
   fireLevel,
   small = false
@@ -12,9 +20,12 @@ export function FirePill({
     return null;
   }
 
+  const levelName = fireLevelNames[fireLevel];
+
   return (
     <span
-      aria-label={`${fireLevel} ${fireLevel === 1 ? "fire" : "fires"}`}
+      aria-label={`${levelName}, ${fireLevel} ${fireLevel === 1 ? "fire" : "fires"}`}
+      title={levelName}
       className={joinClasses(
         "inline-flex items-center gap-1 border px-3 py-1 font-mono tracking-[0.12em]",
         small ? "text-[10px]" : "text-[12px]",
