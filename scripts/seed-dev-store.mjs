@@ -58,6 +58,26 @@ const details = [
   "This could start as a lightweight bulletin with a coordinator rotating in every neighborhood block.",
   "People do not need a full profile. They just need a simple public place to notice and back the idea."
 ];
+const kindLabels = [
+  "community",
+  "service",
+  "marketplace",
+  "software",
+  "media",
+  "physical-product",
+  "hardware"
+];
+const topicLabels = [
+  "local",
+  "small-business",
+  "education",
+  "productivity",
+  "social",
+  "ops",
+  "search",
+  "creator-tools",
+  "finance"
+];
 
 function normalizeIdeaContent(input) {
   return `${input.idea} ${input.details ?? ""}`
@@ -91,6 +111,10 @@ function buildIdea(index, now) {
       index % 4 === 0
         ? `https://example.com/ideas/${id}`
         : null,
+    kind: kindLabels[index % kindLabels.length],
+    topic: topicLabels[index % topicLabels.length],
+    tagSource: "seed",
+    taggedAt: createdAt,
     heat: 0,
     fireCount: 0,
     submitKey: `dev-seed-${(index % 7) + 1}`,

@@ -1,10 +1,15 @@
 export type FireLevel = 0 | 1 | 2 | 3 | 4 | 5;
+export type IdeaTagSource = "ai" | "fallback" | "mixed" | "seed";
 
 export interface IdeaRecord {
   id: string;
   idea: string;
   details: string | null;
   externalLink: string | null;
+  kind: string | null;
+  topic: string | null;
+  tagSource: IdeaTagSource | null;
+  taggedAt: string | null;
   heat: number;
   fireCount: number;
   submitKey: string;
@@ -50,6 +55,9 @@ export interface IdeaSummary {
   fireLevel: FireLevel;
   createdAt: string;
   externalLink: string | null;
+  kind: string | null;
+  topic: string | null;
+  tagSource: IdeaTagSource | null;
 }
 
 export interface IdeaDetail extends IdeaSummary {

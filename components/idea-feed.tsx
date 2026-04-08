@@ -7,11 +7,13 @@ import type { IdeaSummary } from "@/lib/types";
 export function IdeaFeed({
   initialIdeas,
   initialHasMore,
-  sort
+  sort,
+  showDevTags
 }: {
   initialIdeas: IdeaSummary[];
   initialHasMore: boolean;
   sort: "hot" | "new";
+  showDevTags: boolean;
 }) {
   const [ideas, setIdeas] = useState(initialIdeas);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -96,7 +98,7 @@ export function IdeaFeed({
       </p>
       <section className="grid gap-3 md:grid-cols-2">
         {ideas.map((idea) => (
-          <IdeaCard key={idea.id} idea={idea} />
+          <IdeaCard key={idea.id} idea={idea} showDevTags={showDevTags} />
         ))}
       </section>
       {hasMore ? (

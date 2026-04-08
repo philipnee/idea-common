@@ -3,6 +3,7 @@ import { customAlphabet } from "nanoid";
 import { appConfig } from "@/lib/config";
 import { isTurnstileConfigured } from "@/lib/env";
 import { verifyIdeaInput } from "@/lib/idea-verification";
+import { tagIdeaById } from "@/lib/tagging";
 import {
   createContentHash,
   getRemoteIp,
@@ -125,7 +126,10 @@ function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
     heat,
     fireLevel: getFireLevel(heat),
     createdAt: idea.createdAt,
-    externalLink: idea.externalLink
+    externalLink: idea.externalLink,
+    kind: idea.kind,
+    topic: idea.topic,
+    tagSource: idea.tagSource
   };
 }
 
@@ -346,7 +350,7 @@ export async function createIdea(
   const contentHash = createContentHash({ idea, details });
   const tokenCheck = verifyPostToken(input.postToken);
 
-  return withStoreMutation(async (store) => {
+  const result = await withStoreMutation(async (store) => {
     if (website) {
       recordAttempt(store, submitKey, contentHash, "honeypot");
       return {
@@ -428,6 +432,10 @@ export async function createIdea(
       idea,
       details,
       externalLink: normalizedExternalLink,
+      kind: null,
+      topic: null,
+      tagSource: null,
+      taggedAt: null,
       heat: 0,
       fireCount: 0,
       submitKey,
@@ -443,6 +451,12 @@ export async function createIdea(
       id
     };
   });
+
+  if (result.ok && result.id) {
+    void tagIdeaById(result.id).catch(() => undefined);
+  }
+
+  return result;
 }
 
 export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaResult> {

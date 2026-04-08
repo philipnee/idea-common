@@ -1,3 +1,4 @@
+import path from "node:path";
 import { env } from "@/lib/env";
 
 interface HeaderBag {
@@ -18,6 +19,26 @@ function readPositiveNumber(name: string, fallback: number) {
   }
 
   return numeric;
+}
+
+function readBoolean(name: string, fallback: boolean) {
+  const raw = process.env[name];
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
 }
 
 function readOrderedThresholds(defaults: readonly number[]) {
@@ -46,6 +67,16 @@ export const appConfig = {
     endpointBase:
       process.env.GEMINI_BASE_URL?.trim() ||
       "https://generativelanguage.googleapis.com/v1beta"
+  },
+  tagging: {
+    taxonomyPath:
+      process.env.GOFRIEDA_TAGGING_TAXONOMY_PATH?.trim() ||
+      path.join(process.cwd(), "content", "tag-taxonomy.txt"),
+    timeoutMs: readPositiveNumber("GOFRIEDA_TAGGING_TIMEOUT_MS", 5_000),
+    keywordFallbackEnabled: readBoolean(
+      "GOFRIEDA_TAGGING_KEYWORD_FALLBACK",
+      true
+    )
   },
   fire: {
     decayWindowHours: readPositiveNumber("FIRE_DECAY_WINDOW_HOURS", 24),

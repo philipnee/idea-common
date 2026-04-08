@@ -55,7 +55,18 @@ function normalizeStore(store: StoreShape): StoreShape {
       externalLink:
         typeof idea.externalLink === "string" && idea.externalLink
           ? idea.externalLink
-          : null
+          : null,
+      kind: typeof idea.kind === "string" && idea.kind ? idea.kind : null,
+      topic: typeof idea.topic === "string" && idea.topic ? idea.topic : null,
+      tagSource:
+        idea.tagSource === "ai" ||
+        idea.tagSource === "fallback" ||
+        idea.tagSource === "mixed" ||
+        idea.tagSource === "seed"
+          ? idea.tagSource
+          : null,
+      taggedAt:
+        typeof idea.taggedAt === "string" && idea.taggedAt ? idea.taggedAt : null
     })),
     fires: store.fires ?? [],
     postAttempts: store.postAttempts ?? []

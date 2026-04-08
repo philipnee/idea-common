@@ -1,0 +1,27 @@
+# Go Frieda hidden taxonomy
+# Format:
+# [kind] or [topic]
+# label: keyword one, keyword two, keyword three
+
+[kind]
+software: software, app, saas, platform, tool, api, dashboard, workflow, automation
+hardware: hardware, device, gadget, robot, sensor, wearable, machine, appliance
+service: service, agency, consulting, concierge, maintenance, repair, delivery, cleaning
+marketplace: marketplace, exchange, booking, directory, listings, network, rental
+community: community, neighborhood, club, group, bulletin, mutual aid, volunteer, forum
+media: media, newsletter, podcast, publication, video, audio, writing, content
+physical-product: product, kit, box, accessory, furniture, packaged good
+other: other
+
+[topic]
+search: search, discover, discovery, find, lookup, retrieval, indexing
+small-business: small business, smb, local shop, merchant, restaurant, salon, cafe, store
+education: education, school, student, teacher, tutor, tutoring, learning, course
+productivity: productivity, workflow, task, calendar, notes, organize, scheduling
+local: local, neighborhood, city, block, nearby, community, hyperlocal
+health: health, clinic, therapy, wellness, care, medical
+finance: finance, payment, invoice, budget, payroll, tax, bookkeeping
+creator-tools: creator, writing, video, audio, design, editing, publishing
+social: social, friendship, chat, community, messaging, group, dating
+ops: logistics, inventory, operations, routing, procurement, field service
+other: other

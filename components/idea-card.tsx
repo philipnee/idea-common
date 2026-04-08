@@ -1,10 +1,17 @@
+import { DevTagMeta } from "@/components/dev-tag-meta";
 import Link from "next/link";
 import { FirePill } from "@/components/fire-pill";
 import { joinClasses } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
 import type { IdeaSummary } from "@/lib/types";
 
-export function IdeaCard({ idea }: { idea: IdeaSummary }) {
+export function IdeaCard({
+  idea,
+  showDevTags = false
+}: {
+  idea: IdeaSummary;
+  showDevTags?: boolean;
+}) {
   return (
     <Link
       href={`/ideas/${idea.id}`}
@@ -20,6 +27,14 @@ export function IdeaCard({ idea }: { idea: IdeaSummary }) {
     >
       <div className="space-y-4">
         <FirePill fireLevel={idea.fireLevel} small />
+        {showDevTags ? (
+          <DevTagMeta
+            kind={idea.kind}
+            topic={idea.topic}
+            tagSource={idea.tagSource}
+            compact
+          />
+        ) : null}
         <p className="font-mono text-[18px] leading-8 tracking-[-0.01em] text-ink">
           {idea.idea}
         </p>

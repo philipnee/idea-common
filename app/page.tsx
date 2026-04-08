@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IdeaFeed } from "@/components/idea-feed";
 import { SiteShell } from "@/components/site-shell";
+import { isDevAppMode } from "@/lib/env";
 import { listIdeas } from "@/lib/ideas";
 import { joinClasses } from "@/lib/format";
 
@@ -16,6 +17,7 @@ export default async function HomePage({
 }) {
   const sort = searchParams?.sort === "new" ? "new" : "hot";
   const page = Number(searchParams?.page ?? "1");
+  const showDevTags = isDevAppMode();
   const feed = await listIdeas({
     sort,
     page: Number.isFinite(page) ? page : 1,
@@ -53,6 +55,7 @@ export default async function HomePage({
           initialIdeas={feed.ideas}
           initialHasMore={feed.hasMore}
           sort={sort}
+          showDevTags={showDevTags}
         />
       ) : (
         <section className="border border-dashed border-[#d7cab8] bg-card px-6 py-12 text-center shadow-card">

@@ -1,3 +1,4 @@
+import { DevTagMeta } from "@/components/dev-tag-meta";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -5,6 +6,7 @@ import { FireButton } from "@/components/fire-button";
 import { FirePill } from "@/components/fire-pill";
 import { ShareLinkBar } from "@/components/share-link-bar";
 import { SiteShell } from "@/components/site-shell";
+import { isDevAppMode } from "@/lib/env";
 import { formatRelativeTime } from "@/lib/format";
 import { getPublicIdeaUrl } from "@/lib/config";
 import { getIdeaById } from "@/lib/ideas";
@@ -22,6 +24,7 @@ export default async function IdeaDetailPage({
   const headerBag = headers();
   const viewerKey = getRequestKey(headerBag);
   const idea = await getIdeaById(params.id, viewerKey);
+  const showDevTags = isDevAppMode();
 
   if (!idea) {
     notFound();
@@ -54,6 +57,13 @@ export default async function IdeaDetailPage({
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                 {formatRelativeTime(idea.createdAt)}
               </p>
+              {showDevTags ? (
+                <DevTagMeta
+                  kind={idea.kind}
+                  topic={idea.topic}
+                  tagSource={idea.tagSource}
+                />
+              ) : null}
               {idea.externalLink ? (
                 <a
                   href={idea.externalLink}
