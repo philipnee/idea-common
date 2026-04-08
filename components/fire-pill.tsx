@@ -9,6 +9,14 @@ const fireLevelNames: Record<Exclude<FireLevel, 0>, string> = {
   5: "Supernova"
 };
 
+const fireLevelSymbols: Record<Exclude<FireLevel, 0>, string[]> = {
+  1: ["🔥"],
+  2: ["🔥", "🔥"],
+  3: ["🔥", "🔥", "🔥"],
+  4: ["🔥", "🔥", "🔥", "🔥"],
+  5: ["💥"]
+};
+
 export function FirePill({
   fireLevel,
   small = false
@@ -21,10 +29,15 @@ export function FirePill({
   }
 
   const levelName = fireLevelNames[fireLevel];
+  const levelSymbols = fireLevelSymbols[fireLevel];
+  const accessibleLabel =
+    fireLevel === 5
+      ? "Supernova"
+      : `${levelName}, ${fireLevel} ${fireLevel === 1 ? "fire" : "fires"}`;
 
   return (
     <span
-      aria-label={`${levelName}, ${fireLevel} ${fireLevel === 1 ? "fire" : "fires"}`}
+      aria-label={accessibleLabel}
       title={levelName}
       className={joinClasses(
         "inline-flex items-center gap-1 border px-3 py-1 font-mono tracking-[0.12em]",
@@ -36,9 +49,9 @@ export function FirePill({
         fireLevel === 5 && "border-[#c68861] bg-[#e3c0b2]"
       )}
     >
-      {Array.from({ length: fireLevel }, (_, index) => (
-        <span key={index} className="leading-none">
-          🔥
+      {levelSymbols.map((symbol, index) => (
+        <span key={`${symbol}-${index}`} className="leading-none">
+          {symbol}
         </span>
       ))}
     </span>

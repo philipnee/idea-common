@@ -16,7 +16,7 @@ Instead of likes, we use a heuristic to calculate how hot your idea is:
 
 - 🔥🔥🔥🔥 Blaze — real momentum.
 
-- 🔥🔥🔥🔥🔥 Supernova — stop reading this and go build it.
+- 💥 Supernova — stop reading this and go build it.
 
 Heat rises when real people pay attention over time. It decays when they don't. You can't game it. Either people genuinely keep coming back to your idea, or they don't.
 Post an idea. Share the link. Check back tomorrow.
