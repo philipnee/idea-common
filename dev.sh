@@ -11,6 +11,8 @@ node "$ROOT_DIR/scripts/seed-dev-store.mjs" "$GOFRIEDA_STORE_TEMPLATE_PATH"
 
 if [ ! -f "$GOFRIEDA_STORE_PATH" ]; then
   cp "$GOFRIEDA_STORE_TEMPLATE_PATH" "$GOFRIEDA_STORE_PATH"
+elif node "$ROOT_DIR/scripts/should-refresh-dev-store.mjs" "$GOFRIEDA_STORE_PATH"; then
+  cp "$GOFRIEDA_STORE_TEMPLATE_PATH" "$GOFRIEDA_STORE_PATH"
 fi
 
 exec npm run dev
