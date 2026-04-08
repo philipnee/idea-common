@@ -28,8 +28,8 @@ export default async function HomePage({
   return (
     <SiteShell
       current={sort}
-      title="Go Frieda"
-      description="Public ideas worth passing around. Post one fast, then back the ones that deserve more attention."
+      title="Litboard"
+      description="Public ideas worth passing around. Post one fast, then light the ones that deserve more attention."
     >
       <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
         <div className="inline-flex w-fit border border-[#ddd0bf] bg-[#ebe2d4] p-1 shadow-card">

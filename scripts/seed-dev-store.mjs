@@ -21,7 +21,7 @@ const themes = [
   "Tiny office swap club",
   "Tool lending passport",
   "Freelancer referral circle",
-  "Dog park bulletin",
+  "Park bench bulletin",
   "Civic suggestion wall",
   "Unused food rescue alert",
   "School project mentor board",

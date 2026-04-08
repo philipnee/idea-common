@@ -21,15 +21,15 @@ function readEnv(name: string, fallback?: string) {
 }
 
 export const env = {
-  appMode: process.env.GOFRIEDA_APP_MODE?.trim() === "prod" ? "prod" : "dev",
+  appMode: process.env.LITBOARD_APP_MODE?.trim() === "prod" ? "prod" : "dev",
   cronSecret: readEnv("CRON_SECRET", "dev-cron-secret"),
   postTokenSecret: readEnv("POST_TOKEN_SECRET", "dev-post-token-secret"),
   siteUrl: readEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000"),
   storePath:
-    process.env.GOFRIEDA_STORE_PATH?.trim() ||
+    process.env.LITBOARD_STORE_PATH?.trim() ||
     path.join(process.cwd(), "data", "runtime-store.json"),
   storeTemplatePath:
-    process.env.GOFRIEDA_STORE_TEMPLATE_PATH?.trim() ||
+    process.env.LITBOARD_STORE_TEMPLATE_PATH?.trim() ||
     path.join(process.cwd(), "data", "store.json"),
   turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY ?? "",
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""

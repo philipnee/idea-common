@@ -1,4 +1,4 @@
-# Go Frieda hidden taxonomy
+# Litboard hidden taxonomy
 # Format:
 # [kind] or [topic]
 # label: keyword one, keyword two, keyword three

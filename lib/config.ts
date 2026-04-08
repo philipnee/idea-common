@@ -90,11 +90,11 @@ export const appConfig = {
   },
   tagging: {
     taxonomyPath:
-      process.env.GOFRIEDA_TAGGING_TAXONOMY_PATH?.trim() ||
+      process.env.LITBOARD_TAGGING_TAXONOMY_PATH?.trim() ||
       path.join(process.cwd(), "content", "tag-taxonomy.txt"),
-    timeoutMs: readPositiveNumber("GOFRIEDA_TAGGING_TIMEOUT_MS", 5_000),
+    timeoutMs: readPositiveNumber("LITBOARD_TAGGING_TIMEOUT_MS", 5_000),
     keywordFallbackEnabled: readBoolean(
-      "GOFRIEDA_TAGGING_KEYWORD_FALLBACK",
+      "LITBOARD_TAGGING_KEYWORD_FALLBACK",
       true
     )
   },

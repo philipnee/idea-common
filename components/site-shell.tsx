@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { DevResetButton } from "@/components/dev-reset-button";
-import { FreedaMark } from "@/components/freeda-mark";
+import { MatchMark } from "@/components/match-mark";
 import { isDevAppMode } from "@/lib/env";
 
 export function SiteShell({
   children,
   current = "hot",
-  title = "Go Frieda",
-  description = "Public ideas worth passing around. Post one fast, then back the ones that deserve more attention.",
+  title = "Litboard",
+  description = "Public ideas worth passing around. Post one fast, then light the ones that deserve more attention.",
   tagline
 }: {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export function SiteShell({
   const largeBrand = current === "hot" || current === "new";
   const isDevMode = isDevAppMode();
   const resolvedTitle =
-    isDevMode && title === "Go Frieda" ? "Go Frieda Dev mode" : title;
+    isDevMode && title === "Litboard" ? "Litboard Dev mode" : title;
 
   return (
     <main className="min-h-screen px-4 py-10 text-ink sm:px-6 lg:px-8">
@@ -41,9 +41,9 @@ export function SiteShell({
         <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
             <Link href="/" className="inline-flex">
-              <FreedaMark
+              <MatchMark
                 className={
-                  largeBrand ? "text-6xl sm:text-7xl" : "text-5xl sm:text-6xl"
+                  largeBrand ? "h-20 w-14 sm:h-24 sm:w-16" : "h-16 w-12 sm:h-20 sm:w-14"
                 }
               />
             </Link>
