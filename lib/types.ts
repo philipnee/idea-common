@@ -11,6 +11,7 @@ export interface IdeaRecord {
   tagSource: IdeaTagSource | null;
   taggedAt: string | null;
   heat: number;
+  heatDate: string | null;
   fireCount: number;
   submitKey: string;
   contentHash: string;
@@ -19,6 +20,13 @@ export interface IdeaRecord {
 }
 
 export interface FireRecord {
+  id: string;
+  ideaId: string;
+  userFingerprint: string;
+  createdAt: string;
+}
+
+export interface ViewRecord {
   id: string;
   ideaId: string;
   userFingerprint: string;
@@ -45,6 +53,7 @@ export interface PostAttemptRecord {
 export interface StoreShape {
   ideas: IdeaRecord[];
   fires: FireRecord[];
+  views: ViewRecord[];
   postAttempts: PostAttemptRecord[];
 }
 

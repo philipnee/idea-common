@@ -33,8 +33,11 @@ try {
   const isMissingTags = ideas.some((idea) => {
     return !isPlainObject(idea) || !idea.kind || !idea.topic;
   });
+  const isMissingViewModel =
+    !Array.isArray(parsed.views) ||
+    ideas.some((idea) => !isPlainObject(idea) || !("heatDate" in idea));
 
-  process.exit(isPureSeedDataset && isMissingTags ? 0 : 1);
+  process.exit(isPureSeedDataset && (isMissingTags || isMissingViewModel) ? 0 : 1);
 } catch {
   process.exit(1);
 }

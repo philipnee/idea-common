@@ -6,6 +6,7 @@ import type { StoreShape } from "@/lib/types";
 const defaultStore: StoreShape = {
   ideas: [],
   fires: [],
+  views: [],
   postAttempts: []
 };
 
@@ -52,6 +53,10 @@ function normalizeStore(store: StoreShape): StoreShape {
     ...store,
     ideas: (store.ideas ?? []).map((idea) => ({
       ...idea,
+      heat:
+        typeof idea.heat === "number" && Number.isFinite(idea.heat) ? idea.heat : 0,
+      heatDate:
+        typeof idea.heatDate === "string" && idea.heatDate ? idea.heatDate : null,
       externalLink:
         typeof idea.externalLink === "string" && idea.externalLink
           ? idea.externalLink
@@ -69,6 +74,7 @@ function normalizeStore(store: StoreShape): StoreShape {
         typeof idea.taggedAt === "string" && idea.taggedAt ? idea.taggedAt : null
     })),
     fires: store.fires ?? [],
+    views: store.views ?? [],
     postAttempts: store.postAttempts ?? []
   };
 }

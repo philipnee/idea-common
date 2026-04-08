@@ -29,8 +29,9 @@ const generateIdeaId = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8)
 const TEN_MINUTES_MS = 10 * 60 * 1_000;
 const ONE_HOUR_MS = 60 * 60 * 1_000;
 const ONE_DAY_MS = 24 * ONE_HOUR_MS;
-const DECAY_WINDOW_MS = appConfig.fire.decayWindowHours * ONE_HOUR_MS;
 const FIRE_COOLDOWN_MS = appConfig.fire.refireCooldownHours * ONE_HOUR_MS;
+const DAILY_CARRY_FACTOR = appConfig.heat.dailyCarryFactor;
+const VIEW_WEIGHT = appConfig.heat.viewWeight;
 
 function clampLimit(value: number) {
   if (!Number.isFinite(value) || value <= 0) {
@@ -74,6 +75,125 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function roundHeat(value: number) {
+  return Number(value.toFixed(4));
+}
+
+function getDayKey(value: string | number | Date) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function addDayKey(dayKey: string, days = 1) {
+  const date = new Date(`${dayKey}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function getTodayKey(now = Date.now()) {
+  return getDayKey(now);
+}
+
+function getUniqueDailyAudience(
+  records: Array<{ ideaId: string; userFingerprint: string; createdAt: string }>,
+  ideaId: string,
+  dayKey: string
+) {
+  const viewers = new Set<string>();
+
+  for (const record of records) {
+    if (record.ideaId !== ideaId) {
+      continue;
+    }
+
+    if (getDayKey(record.createdAt) !== dayKey) {
+      continue;
+    }
+
+    viewers.add(record.userFingerprint);
+  }
+
+  return viewers;
+}
+
+function getDailyContribution(store: StoreShape, ideaId: string, dayKey: string) {
+  const uniqueFires = getUniqueDailyAudience(store.fires, ideaId, dayKey).size;
+  const uniqueViews = getUniqueDailyAudience(store.views, ideaId, dayKey).size;
+
+  return roundHeat(
+    Math.log2(1 + uniqueFires) + VIEW_WEIGHT * Math.log2(1 + uniqueViews)
+  );
+}
+
+function computeIdeaHeatFromScratch(
+  idea: IdeaRecord,
+  store: StoreShape,
+  targetDayKey: string
+) {
+  const startDayKey = getDayKey(idea.createdAt);
+
+  if (startDayKey > targetDayKey) {
+    return 0;
+  }
+
+  let dayKey = startDayKey;
+  let heat = 0;
+
+  while (dayKey <= targetDayKey) {
+    heat =
+      (dayKey === startDayKey ? 0 : DAILY_CARRY_FACTOR * heat) +
+      getDailyContribution(store, idea.id, dayKey);
+
+    if (dayKey === targetDayKey) {
+      return roundHeat(heat);
+    }
+
+    dayKey = addDayKey(dayKey);
+  }
+
+  return roundHeat(heat);
+}
+
+function computeIdeaHeatForDay(
+  idea: IdeaRecord,
+  store: StoreShape,
+  targetDayKey: string
+) {
+  if (!idea.heatDate) {
+    return computeIdeaHeatFromScratch(idea, store, targetDayKey);
+  }
+
+  if (idea.heatDate >= targetDayKey) {
+    return roundHeat(idea.heat);
+  }
+
+  let dayKey = idea.heatDate;
+  let heat = idea.heat;
+
+  while (dayKey < targetDayKey) {
+    dayKey = addDayKey(dayKey);
+    heat = DAILY_CARRY_FACTOR * heat + getDailyContribution(store, idea.id, dayKey);
+  }
+
+  return roundHeat(heat);
+}
+
+function syncIdeaHeat(idea: IdeaRecord, store: StoreShape, targetDayKey: string) {
+  const heat = computeIdeaHeatForDay(idea, store, targetDayKey);
+  idea.heat = heat;
+  idea.heatDate = targetDayKey;
+  return heat;
+}
+
+function getContributionDelta(previousCount: number, nextCount: number, weight = 1) {
+  if (nextCount <= previousCount) {
+    return 0;
+  }
+
+  return roundHeat(
+    weight * (Math.log2(1 + nextCount) - Math.log2(1 + previousCount))
+  );
+}
+
 export function getFireLevel(heat: number): FireLevel {
   const [one, two, three, four, five] = appConfig.fire.emojiThresholds;
 
@@ -98,26 +218,6 @@ export function getFireLevel(heat: number): FireLevel {
   }
 
   return 0;
-}
-
-function calculateLiveHeat(store: StoreShape, ideaId: string, now: number) {
-  let heat = 0;
-
-  for (const fire of store.fires) {
-    if (fire.ideaId !== ideaId) {
-      continue;
-    }
-
-    const ageMs = now - Date.parse(fire.createdAt);
-
-    if (ageMs < 0 || ageMs >= DECAY_WINDOW_MS) {
-      continue;
-    }
-
-    heat += 1 - ageMs / DECAY_WINDOW_MS;
-  }
-
-  return Number(heat.toFixed(4));
 }
 
 function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
@@ -242,14 +342,14 @@ export async function listIdeas(input: {
   limit?: number;
 }) {
   const store = await readStore();
-  const now = Date.now();
+  const todayKey = getTodayKey();
   const sort = input.sort === "new" ? "new" : "hot";
   const page = Math.max(Math.floor(input.page ?? 1), 1);
   const offset = Number.isFinite(input.offset) ? Math.max(Math.floor(input.offset ?? 0), 0) : null;
   const limit = clampLimit(input.limit ?? 30);
   const ideasWithHeat = store.ideas.map((idea) => ({
     idea,
-    heat: calculateLiveHeat(store, idea.id, now)
+    heat: computeIdeaHeatForDay(idea, store, todayKey)
   }));
   const ordered = ideasWithHeat.sort((a, b) => {
     if (sort === "new") {
@@ -275,7 +375,50 @@ export async function listIdeas(input: {
   };
 }
 
-export async function getIdeaById(id: string, viewerKey: string) {
+export async function getIdeaById(
+  id: string,
+  viewerKey: string,
+  options?: { recordView?: boolean }
+) {
+  if (options?.recordView) {
+    return withStoreMutation((store) => {
+      const idea = store.ideas.find((entry) => entry.id === id);
+
+      if (!idea) {
+        return null;
+      }
+
+      const now = Date.now();
+      const todayKey = getTodayKey(now);
+      syncIdeaHeat(idea, store, todayKey);
+
+      const uniqueViewsToday = getUniqueDailyAudience(store.views, id, todayKey);
+
+      if (!uniqueViewsToday.has(viewerKey)) {
+        const previousViews = uniqueViewsToday.size;
+        store.views.push({
+          id: randomUUID(),
+          ideaId: id,
+          userFingerprint: viewerKey,
+          createdAt: nowIso()
+        });
+        idea.heat = roundHeat(
+          idea.heat + getContributionDelta(previousViews, previousViews + 1, VIEW_WEIGHT)
+        );
+        idea.heatDate = todayKey;
+      }
+
+      const fireAccess = getViewerFireAccess(store, id, viewerKey, now);
+
+      return projectIdeaDetail(
+        idea,
+        fireAccess.viewerCanFire,
+        fireAccess.nextFireAt,
+        idea.heat
+      );
+    });
+  }
+
   const store = await readStore();
   const idea = store.ideas.find((entry) => entry.id === id);
 
@@ -284,15 +427,10 @@ export async function getIdeaById(id: string, viewerKey: string) {
   }
 
   const now = Date.now();
-  const heat = calculateLiveHeat(store, id, now);
+  const heat = computeIdeaHeatForDay(idea, store, getTodayKey(now));
   const fireAccess = getViewerFireAccess(store, id, viewerKey, now);
 
-  return projectIdeaDetail(
-    idea,
-    fireAccess.viewerCanFire,
-    fireAccess.nextFireAt,
-    heat
-  );
+  return projectIdeaDetail(idea, fireAccess.viewerCanFire, fireAccess.nextFireAt, heat);
 }
 
 export async function getPostingContext(submitKey: string) {
@@ -439,6 +577,7 @@ export async function createIdea(
       tagSource: null,
       taggedAt: null,
       heat: 0,
+      heatDate: getDayKey(timestamp),
       fireCount: 0,
       submitKey,
       contentHash,
@@ -473,22 +612,24 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
     }
 
     const now = Date.now();
+    const todayKey = getTodayKey(now);
+    syncIdeaHeat(idea, store, todayKey);
     const fireAccess = getViewerFireAccess(store, id, viewerKey, now);
 
     if (!fireAccess.viewerCanFire) {
-      const heat = calculateLiveHeat(store, id, now);
-      idea.heat = heat;
-
       return {
         ok: true,
         status: 200,
         cooldownActive: true,
-        fireLevel: getFireLevel(heat),
+        fireLevel: getFireLevel(idea.heat),
         nextFireAt: fireAccess.nextFireAt
       };
     }
 
     const nextFireAt = new Date(now + FIRE_COOLDOWN_MS).toISOString();
+    const uniqueFiresToday = getUniqueDailyAudience(store.fires, id, todayKey);
+    const previousUniqueFireCount = uniqueFiresToday.size;
+    const alreadyCountedToday = uniqueFiresToday.has(viewerKey);
 
     store.fires.push({
       id: randomUUID(),
@@ -499,7 +640,12 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
 
     idea.fireCount += 1;
     idea.updatedAt = nowIso();
-    idea.heat = calculateLiveHeat(store, id, now);
+    if (!alreadyCountedToday) {
+      idea.heat = roundHeat(
+        idea.heat + getContributionDelta(previousUniqueFireCount, previousUniqueFireCount + 1)
+      );
+    }
+    idea.heatDate = todayKey;
 
     return {
       ok: true,
@@ -513,11 +659,10 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
 
 export async function recalculateHeat() {
   return withStoreMutation((store) => {
-    const now = Date.now();
+    const todayKey = getTodayKey();
 
     for (const idea of store.ideas) {
-      idea.heat = calculateLiveHeat(store, idea.id, now);
-      idea.updatedAt = nowIso();
+      syncIdeaHeat(idea, store, todayKey);
     }
 
     return {

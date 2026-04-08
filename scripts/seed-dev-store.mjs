@@ -105,9 +105,8 @@ function buildIdea(index, now) {
   const theme = themes[index % themes.length];
   const angle = angles[index % angles.length];
   const idea = `${theme} ${angle}`;
-  const audience = angle.replace(/^for\s+/i, "");
   const detail = [
-    `${theme} would help ${audience} solve a recurring coordination problem before it turns into a bigger chore. ${setupLines[index % setupLines.length]}`,
+    `${theme} solves a recurring coordination problem ${angle} before it turns into a bigger chore. ${setupLines[index % setupLines.length]}`,
     mvpLines[index % mvpLines.length]
   ].join("\n\n");
   const createdAt = isoHoursAgo(now, index * 3 + 2);
@@ -127,6 +126,7 @@ function buildIdea(index, now) {
     tagSource: "seed",
     taggedAt: createdAt,
     heat: 0,
+    heatDate: null,
     fireCount: 0,
     submitKey: `dev-seed-${(index % 7) + 1}`,
     contentHash,
@@ -170,9 +170,45 @@ function buildFires(ideas, now) {
   return fires;
 }
 
+function buildViews(ideas, now) {
+  const views = [];
+  let viewIndex = 0;
+  const recentPattern = [2, 4, 7, 11, 16, 22, 30, 38];
+
+  ideas.forEach((idea, index) => {
+    const totalRecent = recentPattern[index % recentPattern.length];
+    const totalOlder = (index + 1) % 4;
+
+    for (let step = 0; step < totalRecent; step += 1) {
+      const ageHours = 0.15 + step * 0.9 + (index % 5) * 0.12;
+      views.push({
+        id: `dev-view-${String(viewIndex + 1).padStart(5, "0")}`,
+        ideaId: idea.id,
+        userFingerprint: `seed-view-${index}-${step}`,
+        createdAt: isoHoursAgo(now, ageHours)
+      });
+      viewIndex += 1;
+    }
+
+    for (let step = 0; step < totalOlder; step += 1) {
+      const ageHours = 28 + step * 10 + index * 0.08;
+      views.push({
+        id: `dev-view-${String(viewIndex + 1).padStart(5, "0")}`,
+        ideaId: idea.id,
+        userFingerprint: `seed-older-view-${index}-${step}`,
+        createdAt: isoHoursAgo(now, ageHours)
+      });
+      viewIndex += 1;
+    }
+  });
+
+  return views;
+}
+
 const now = Date.now();
 const ideas = Array.from({ length: 50 }, (_, index) => buildIdea(index, now));
 const fires = buildFires(ideas, now);
+const views = buildViews(ideas, now);
 const fireCountByIdea = new Map();
 
 for (const fire of fires) {
@@ -186,6 +222,7 @@ for (const idea of ideas) {
 const store = {
   ideas,
   fires,
+  views,
   postAttempts: []
 };
 

@@ -27,7 +27,7 @@ export default async function IdeaDetailPage({
 }) {
   const headerBag = headers();
   const viewerKey = getRequestKey(headerBag);
-  const idea = await getIdeaById(params.id, viewerKey);
+  const idea = await getIdeaById(params.id, viewerKey, { recordView: true });
   const showDevTags = isDevAppMode();
 
   if (!idea) {

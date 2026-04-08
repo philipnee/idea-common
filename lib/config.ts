@@ -21,6 +21,22 @@ function readPositiveNumber(name: string, fallback: number) {
   return numeric;
 }
 
+function readNonNegativeNumber(name: string, fallback: number) {
+  const raw = process.env[name];
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const numeric = Number(raw);
+
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    return fallback;
+  }
+
+  return numeric;
+}
+
 function readBoolean(name: string, fallback: boolean) {
   const raw = process.env[name];
 
@@ -68,6 +84,10 @@ export const appConfig = {
       process.env.GEMINI_BASE_URL?.trim() ||
       "https://generativelanguage.googleapis.com/v1beta"
   },
+  heat: {
+    dailyCarryFactor: readNonNegativeNumber("HEAT_DAILY_CARRY_FACTOR", 0.3),
+    viewWeight: readNonNegativeNumber("HEAT_VIEW_WEIGHT", 0.2)
+  },
   tagging: {
     taxonomyPath:
       process.env.GOFRIEDA_TAGGING_TAXONOMY_PATH?.trim() ||
@@ -79,7 +99,6 @@ export const appConfig = {
     )
   },
   fire: {
-    decayWindowHours: readPositiveNumber("FIRE_DECAY_WINDOW_HOURS", 24),
     refireCooldownHours: readPositiveNumber("FIRE_REFIRE_COOLDOWN_HOURS", 6),
     emojiThresholds: readOrderedThresholds([0.6, 2.4, 4.5, 7, 10] as const)
   }
