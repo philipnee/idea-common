@@ -51,6 +51,7 @@ export interface StoreShape {
 export interface IdeaSummary {
   id: string;
   idea: string;
+  excerpt: string | null;
   heat: number;
   fireLevel: FireLevel;
   createdAt: string;

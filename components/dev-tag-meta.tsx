@@ -5,15 +5,22 @@ export function DevTagMeta({
   kind,
   topic,
   tagSource,
-  compact = false
+  compact = false,
+  showSourceLabel = true,
+  showEmptyState = true
 }: {
   kind: string | null;
   topic: string | null;
   tagSource: IdeaTagSource | null;
   compact?: boolean;
+  showSourceLabel?: boolean;
+  showEmptyState?: boolean;
 }) {
   const values = [kind, topic].filter(Boolean);
-  const sourceLabel = tagSource ? ` ${tagSource}` : "";
+
+  if (!values.length && !showEmptyState) {
+    return null;
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -29,7 +36,7 @@ export function DevTagMeta({
             {value}
           </span>
         ))
-      ) : (
+      ) : showEmptyState ? (
         <span
           className={joinClasses(
             "inline-flex items-center border border-dashed border-[#d9ccb8] bg-[#faf5ee] font-mono uppercase tracking-[0.14em] text-[#9b8c7d]",
@@ -38,15 +45,17 @@ export function DevTagMeta({
         >
           untagged
         </span>
-      )}
-      <span
-        className={joinClasses(
-          "font-mono uppercase tracking-[0.14em] text-muted",
-          compact ? "text-[9px]" : "text-[10px]"
-        )}
-      >
-        dev tags{sourceLabel}
-      </span>
+      ) : null}
+      {showSourceLabel && tagSource ? (
+        <span
+          className={joinClasses(
+            "font-mono uppercase tracking-[0.14em] text-muted",
+            compact ? "text-[9px]" : "text-[10px]"
+          )}
+        >
+          {tagSource}
+        </span>
+      ) : null}
     </div>
   );
 }

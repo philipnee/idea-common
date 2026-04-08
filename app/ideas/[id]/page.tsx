@@ -7,7 +7,11 @@ import { FirePill } from "@/components/fire-pill";
 import { ShareLinkBar } from "@/components/share-link-bar";
 import { SiteShell } from "@/components/site-shell";
 import { isDevAppMode } from "@/lib/env";
-import { formatRelativeTime } from "@/lib/format";
+import {
+  formatExternalLinkLabel,
+  formatRelativeTime,
+  splitIdeaDetails
+} from "@/lib/format";
 import { getPublicIdeaUrl } from "@/lib/config";
 import { getIdeaById } from "@/lib/ideas";
 import { getRequestKey } from "@/lib/security";
@@ -32,6 +36,7 @@ export default async function IdeaDetailPage({
 
   const wasJustPosted = searchParams?.posted === "true";
   const shareUrl = getPublicIdeaUrl(idea.id, headerBag);
+  const detailParagraphs = splitIdeaDetails(idea.details);
 
   return (
     <SiteShell
@@ -62,6 +67,7 @@ export default async function IdeaDetailPage({
                   kind={idea.kind}
                   topic={idea.topic}
                   tagSource={idea.tagSource}
+                  showEmptyState={false}
                 />
               ) : null}
               {idea.externalLink ? (
@@ -69,9 +75,9 @@ export default async function IdeaDetailPage({
                   href={idea.externalLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex border border-[#d8ccb9] bg-[#f7f0e6] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted transition hover:text-ink"
+                  className="font-mono text-[11px] tracking-[0.02em] text-[#6f5645] underline decoration-[#c7a98f] underline-offset-4 transition hover:text-ink"
                 >
-                  External Link
+                  Source: {formatExternalLinkLabel(idea.externalLink)}
                 </a>
               ) : null}
             </div>
@@ -86,9 +92,13 @@ export default async function IdeaDetailPage({
             <h2 className="max-w-3xl font-mono text-[26px] leading-tight tracking-[-0.01em] sm:text-[31px]">
               {idea.idea}
             </h2>
-            {idea.details ? (
-              <div className="max-w-3xl whitespace-pre-wrap text-[15px] leading-8 text-muted">
-                {idea.details}
+            {detailParagraphs.length ? (
+              <div className="max-w-3xl space-y-5 text-[16px] leading-8 text-[#564b41]">
+                {detailParagraphs.map((paragraph, index) => (
+                  <p key={index} className="whitespace-pre-wrap">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             ) : null}
           </div>

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { appConfig } from "@/lib/config";
 import { isTurnstileConfigured } from "@/lib/env";
+import { extractIdeaExcerpt } from "@/lib/format";
 import { verifyIdeaInput } from "@/lib/idea-verification";
 import { tagIdeaById } from "@/lib/tagging";
 import {
@@ -123,6 +124,7 @@ function projectIdea(idea: IdeaRecord, heat: number): IdeaSummary {
   return {
     id: idea.id,
     idea: idea.idea,
+    excerpt: extractIdeaExcerpt(idea.details),
     heat,
     fireLevel: getFireLevel(heat),
     createdAt: idea.createdAt,

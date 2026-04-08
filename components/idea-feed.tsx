@@ -93,9 +93,11 @@ export function IdeaFeed({
 
   return (
     <div className="space-y-4">
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-        {ideas.length} loaded
-      </p>
+      {showDevTags ? (
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+          {ideas.length} loaded
+        </p>
+      ) : null}
       <section className="grid gap-3 md:grid-cols-2">
         {ideas.map((idea) => (
           <IdeaCard key={idea.id} idea={idea} showDevTags={showDevTags} />

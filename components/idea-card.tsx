@@ -12,40 +12,57 @@ export function IdeaCard({
   idea: IdeaSummary;
   showDevTags?: boolean;
 }) {
+  const toneClass = joinClasses(
+    idea.fireLevel === 0 && "border-[#ddd0bf] bg-[#f5efe5] hover:border-[#cdbca7]",
+    idea.fireLevel === 1 && "border-[#e4c98f] bg-[#f7ecd5] hover:border-[#d7b477]",
+    idea.fireLevel === 2 && "border-[#dfad69] bg-[#f4dfbf] hover:border-[#cf9450]",
+    idea.fireLevel === 3 && "border-[#d68757] bg-[#f0c9a7] hover:border-[#c96f40]",
+    idea.fireLevel === 4 && "border-[#c5653c] bg-[#ebb092] hover:border-[#b6542e] shadow-[0_12px_28px_rgba(197,101,60,0.14)]",
+    idea.fireLevel === 5 && "border-[#ad4828] bg-[#e19479] hover:border-[#963a1f] shadow-[0_16px_34px_rgba(173,72,40,0.2)]"
+  );
+
   return (
     <Link
       href={`/ideas/${idea.id}`}
       className={joinClasses(
-        "group flex min-h-40 flex-col justify-between border px-4 py-4 shadow-card transition hover:border-[#cdbca7]",
-        idea.fireLevel === 0 && "border-line bg-card",
-        idea.fireLevel === 1 && "border-[#e2d0b8] bg-[#f6eee1]",
-        idea.fireLevel === 2 && "border-[#e0c4a5] bg-[#f4e4d3]",
-        idea.fireLevel === 3 && "border-[#ddb38b] bg-[#f0ddca]",
-        idea.fireLevel === 4 && "border-[#d6a27a] bg-[#ecd2c0]",
-        idea.fireLevel === 5 && "border-[#cf8f69] bg-[#e7c4b5]"
+        "group flex min-h-[15rem] flex-col justify-between border px-4 py-4 shadow-card transition duration-150 hover:-translate-y-0.5",
+        toneClass
       )}
     >
       <div className="space-y-4">
-        <FirePill fireLevel={idea.fireLevel} small />
+        <div className="flex items-start justify-between gap-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+            {formatRelativeTime(idea.createdAt)}
+          </p>
+          <FirePill fireLevel={idea.fireLevel} small />
+        </div>
         {showDevTags ? (
           <DevTagMeta
             kind={idea.kind}
             topic={idea.topic}
             tagSource={idea.tagSource}
             compact
+            showSourceLabel={false}
+            showEmptyState={false}
           />
         ) : null}
-        <p className="font-mono text-[18px] leading-8 tracking-[-0.01em] text-ink">
-          {idea.idea}
-        </p>
+        <div className="space-y-3">
+          <h2 className="font-mono text-[20px] leading-8 tracking-[-0.02em] text-ink">
+            {idea.idea}
+          </h2>
+          {idea.excerpt ? (
+            <p className="max-w-[34ch] text-[13px] leading-6 text-[#5d5044]">
+              {idea.excerpt}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div className="flex items-center justify-between gap-3 pt-6">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-          idea
-        </span>
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-          {formatRelativeTime(idea.createdAt)}
-        </p>
+      <div className="pt-5">
+        {showDevTags ? (
+          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+            dev view
+          </p>
+        ) : null}
       </div>
     </Link>
   );
