@@ -4,7 +4,7 @@ import { MatchMark } from "@/components/match-mark";
 import { SiteShell } from "@/components/site-shell";
 
 async function getAboutCopy() {
-  const filePath = path.join(process.cwd(), "content", "about.txt");
+  const filePath = path.join(process.cwd(), "content", "about.md");
   const raw = await readFile(filePath, "utf8");
   const sections = raw
     .split(/\n\s*\n/)
