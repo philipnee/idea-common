@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { FireButton } from "@/components/fire-button";
 import { FirePill } from "@/components/fire-pill";
 import { ShareLinkBar } from "@/components/share-link-bar";
+import { ShareLinkButton } from "@/components/share-link-button";
 import { SiteShell } from "@/components/site-shell";
 import { isDevAppMode } from "@/lib/env";
 import {
@@ -80,6 +81,7 @@ export default async function IdeaDetailPage({
                   Source: {formatExternalLinkLabel(idea.externalLink)}
                 </a>
               ) : null}
+              <ShareLinkButton shareUrl={shareUrl} />
             </div>
             <FireButton
               ideaId={idea.id}
