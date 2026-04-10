@@ -8,5 +8,6 @@ export LITBOARD_STORE_TEMPLATE_PATH="$ROOT_DIR/data/dev-template-store.json"
 export LITBOARD_STORE_PATH="$ROOT_DIR/data/dev-runtime-store.db"
 
 node "$ROOT_DIR/scripts/seed-dev-store.mjs" "$LITBOARD_STORE_TEMPLATE_PATH"
+node "$ROOT_DIR/scripts/init-sqlite-store.mjs" "$LITBOARD_STORE_PATH" "$LITBOARD_STORE_TEMPLATE_PATH"
 
 exec npm run dev
