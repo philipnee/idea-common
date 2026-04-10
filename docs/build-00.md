@@ -1,53 +1,46 @@
-# Idea Commons — Build Specification v1
-# Version: v1.0.0
+# Idea Commons — Build Specification
+# Version: v1
 # Created: 2026-04-06
-# Status: INITIAL SPEC
+# Status
 
 ---
 
 ## Changelog
 
-### v1.0.0 — 2026-04-06
+### v1 — 2026-04-06
 - Initial V1 specification
-- Core features: idea feed, idea cards, fire mechanic, posting flow, email auth
-- Fire heat algorithm defined
-- Database schema defined
-- API routes defined
-- UI/UX requirements defined
+- Core features: idea feed (masonry grid), fire mechanic (spectrum, no counts), posting with email verification
+- No accounts, no dashboard, no notifications, no SEO pages, no semantic search, no seed data
+- Views contribute to heat formula
+- Free-form tags, markdown pitch, 8-char short URLs
 
 ---
 
 ## 1. Product Overview
 
-**Idea Commons** is a public feed of startup ideas where people can post, browse, and "fire" ideas to signal interest. It is Craigslist for startup ideas — radically simple, zero-friction, and alive.
+**Idea Commons** is a public feed of startup ideas where people can post, browse, and "fire" ideas to signal interest.
 
-### Core Thesis
-- Posting an idea should take 60 seconds
-- People should feel their idea entered circulation
-- Lightweight social signal (fire) matters more than comments
-- No signup required to browse or fire
-- Posting requires email authentication
+### V1 Features — The Complete List
+1. Public idea feed (dynamic grid homepage)
+2. Idea detail page (with markdown pitch)
+3. Fire button (anonymous, one per person per idea)
+4. Post an idea (email verification required, no account)
+5. Heat algorithm (fires + views → spectrum label)
 
-### V1 Scope — What We Build
-- Public idea feed (homepage)
-- Idea detail page
-- Fire button with heat algorithm
-- Post an idea flow (email auth required)
-- Semantic search ("What's your problem?")
-- Basic creator dashboard (my ideas + fire stats)
-- Email notification: "Your idea just got fired"
-- SEO category pages
+**That's it. Five features. Nothing else.**
 
-### V1 Scope — What We Do NOT Build
-- Comments
-- User profiles / public profiles
-- Follow / unfollow
-- Direct messaging
-- "Remix this idea" / "Propose a better idea"
-- "I'd build this" / "I'd pay for this" signals
-- Admin dashboard
-- Moderation AI (manual moderation in V1)
-- Mobile app
+### Explicitly NOT in V1
+- No user accounts, no login, no signup
+- No dashboard
+- No email notifications
+- No comments
+- No profiles
+- No SEO landing pages
+- No admin panel
+- No "remix" or "improve" features
+- No categories page
+- No semantic search (future feature)
+- No seed data / AI-generated ideas
 
 ---
 
@@ -55,26 +48,23 @@
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
-| Framework | Next.js 14+ (App Router) | Full-stack, SSR for SEO, API routes built-in |
-| Language | TypeScript | Type safety across stack |
-| Database | Supabase (PostgreSQL) | Free tier, built-in auth, pgvector for search |
-| Auth | Supabase Auth (magic link email) | Zero-password, minimal friction |
-| Vector Search | pgvector (via Supabase) | Semantic search without separate service |
-| Embeddings | OpenAI text-embedding-3-small | Cost-effective, high quality |
-| Email | Resend | Transactional emails (fire notifications, magic links) |
-| Styling | Tailwind CSS | Rapid UI development |
-| Deployment | Vercel | Free tier, automatic deploys from git |
-| Analytics | Plausible or Umami (self-hosted) | Privacy-friendly, simple |
-| Cron Jobs | Vercel Cron or GitHub Actions | Daily heat recalculation |
+| Framework | Next.js 14+ (App Router) | Full-stack, SSR, API routes |
+| Language | TypeScript | Type safety |
+| Database | Supabase (PostgreSQL) | Free tier, built-in auth not used but DB is solid |
+| Email Verification | Resend | Send one verification email per post |
+| Styling | Tailwind CSS | Fast |
+| Deployment | Vercel | Free tier |
+| Cron | Vercel Cron | Daily heat recalculation |
 
-### Environment Variables Required
+### Environment Variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-OPENAI_API_KEY=
 RESEND_API_KEY=
+CRON_SECRET=
+NEXT_PUBLIC_SITE_URL=https://ideacommons.co
 ```
 
 ---
@@ -85,37 +75,24 @@ RESEND_API_KEY=
 
 ```sql
 CREATE TABLE ideas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id VARCHAR(8) PRIMARY KEY,
   title VARCHAR(100) NOT NULL,
   one_liner VARCHAR(200) NOT NULL,
   pitch TEXT NOT NULL,
-  category VARCHAR(50),
-  author_id UUID REFERENCES users(id),
-  is_seed BOOLEAN DEFAULT false,
+  tags TEXT[],
+  author_email VARCHAR(255) NOT NULL,
+  is_verified BOOLEAN DEFAULT false,
+  verification_token VARCHAR(64),
   heat FLOAT DEFAULT 0,
   fire_count INTEGER DEFAULT 0,
   view_count INTEGER DEFAULT 0,
-  embedding VECTOR(1536),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_ideas_heat ON ideas(heat DESC);
 CREATE INDEX idx_ideas_created ON ideas(created_at DESC);
-CREATE INDEX idx_ideas_category ON ideas(category);
-CREATE INDEX idx_ideas_embedding ON ideas USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
-```
-
-### Table: `users`
-
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  display_name VARCHAR(50),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  last_seen_at TIMESTAMPTZ DEFAULT now()
-);
+CREATE INDEX idx_ideas_verified ON ideas(is_verified) WHERE is_verified = true;
 ```
 
 ### Table: `fires`
@@ -123,9 +100,8 @@ CREATE TABLE users (
 ```sql
 CREATE TABLE fires (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  idea_id UUID REFERENCES ideas(id) ON DELETE CASCADE NOT NULL,
+  idea_id VARCHAR(8) REFERENCES ideas(id) ON DELETE CASCADE NOT NULL,
   user_fingerprint VARCHAR(64) NOT NULL,
-  user_id UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(idea_id, user_fingerprint)
 );
@@ -139,9 +115,10 @@ CREATE INDEX idx_fires_created ON fires(created_at);
 ```sql
 CREATE TABLE daily_heat_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  idea_id UUID REFERENCES ideas(id) ON DELETE CASCADE NOT NULL,
+  idea_id VARCHAR(8) REFERENCES ideas(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   unique_fires INTEGER DEFAULT 0,
+  unique_views INTEGER DEFAULT 0,
   heat_value FLOAT DEFAULT 0,
   UNIQUE(idea_id, date)
 );
@@ -149,706 +126,672 @@ CREATE TABLE daily_heat_log (
 CREATE INDEX idx_heat_log_idea_date ON daily_heat_log(idea_id, date DESC);
 ```
 
-### Notes on Schema
-- `user_fingerprint`: SHA-256 hash of IP + User-Agent for anonymous fire tracking. This prevents duplicate fires from the same browser without requiring login.
-- `is_seed`: Marks AI-generated seed ideas so they can be labeled differently in the UI.
-- `embedding`: 1536-dimension vector from OpenAI text-embedding-3-small, generated from concatenation of title + one_liner + pitch.
-- `heat`: Recalculated daily by cron job using the fire formula.
+### Table: `views`
+
+```sql
+CREATE TABLE views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  idea_id VARCHAR(8) REFERENCES ideas(id) ON DELETE CASCADE NOT NULL,
+  user_fingerprint VARCHAR(64) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(idea_id, user_fingerprint)
+);
+
+CREATE INDEX idx_views_idea ON views(idea_id);
+```
+
+### Short ID Generation
+
+```typescript
+// Generate 8-character alphanumeric ID
+// Uses lowercase + digits for URL friendliness
+// Collision check on insert, regenerate if exists
+
+import { customAlphabet } from 'nanoid';
+
+const generateId = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 8);
+
+// Example output: "a1b2c3d4"
+// URL: ideacommons.co/idea/a1b2c3d4
+```
+
+### Notes
+- `id` is 8 chars, no dashes, lowercase alphanumeric (36^8 = 2.8 trillion possible IDs)
+- `author_email` is stored but NEVER displayed publicly
+- `is_verified` defaults to false; flips to true when verification link is clicked
+- `verification_token` is a random 64-char hex string, cleared after verification
+- `tags` is a PostgreSQL text array, stored from comma-separated input
+- `fire_count` and `view_count` are denormalized counters for query performance
+- Views are deduplicated by fingerprint (one view per person per idea)
 
 ---
 
 ## 4. Fire Heat Algorithm
 
-### Formula
+### Updated Formula (fires + views)
 
 ```
-heat(today) = α × heat(yesterday) + log2(1 + unique_fires_today)
+heat(today) = α × heat(yesterday) + log2(1 + unique_fires_today) + 0.3 × log2(1 + unique_views_today)
 ```
 
 Where:
-- `α = 0.3` (decay factor — aggressive, rewards freshness)
-- `unique_fires_today` = count of distinct `user_fingerprint` values that fired this idea today
+- `α = 0.3` (decay factor)
+- `unique_fires_today` = distinct fingerprints that fired today
+- `unique_views_today` = distinct fingerprints that viewed the detail page today
+- Views contribute at 0.3x weight of fires (seeing is weaker signal than firing)
 
-### Cron Job: `recalculate-heat`
+### Fire Spectrum
 
-Runs daily at 00:00 UTC.
+Seven tiers. Users NEVER see numbers. Only the label and visual.
 
-```
-For each idea:
-  1. Count unique fires from the past 24 hours
-  2. new_heat = 0.3 * current_heat + log2(1 + unique_fires_today)
-  3. Update ideas.heat = new_heat
-  4. Insert row into daily_heat_log for historical tracking
-  5. Update ideas.fire_count = total fires for this idea (all time)
-```
+| Heat Range | Label | Visual Treatment |
+|-----------|-------|-----------------|
+| 0 – 0.3 | — | Nothing shown. Invisible. No indicator at all. |
+| 0.3 – 1.0 | Ash | Faint gray smoke wisp. Barely visible. |
+| 1.0 – 2.5 | Ember | Dim warm orange dot. Quiet glow. |
+| 2.5 – 4.5 | Spark | Small flame icon, warm orange. |
+| 4.5 – 7.0 | Flame | Bright flame, orange-red. Confident. |
+| 7.0 – 10.0 | Blaze | Large flame with outer glow. Hot. |
+| 10.0 – 15.0 | Inferno | Intense red-orange flame, pulsing glow. |
+| 15.0+ | Wildfire | Animated fire, spreading flames effect. Unmissable. |
 
-### Heat-to-Label Mapping
+### Display Rules
+- NEVER show fire count (no "23 fires" anywhere)
+- NEVER show view count
+- NEVER show any number related to engagement
+- Only show the fire spectrum label + visual indicator
+- New ideas with zero activity show NOTHING (no "Ash" label, no empty state)
+- The first view or fire moves it to "Ash" — even that tiny signal is something
+- On the idea detail page, show the spectrum label prominently but still no count
 
-| Heat Range | Label | CSS Class | Visual |
-|-----------|-------|-----------|--------|
-| 0 – 0.5 | (none) | `heat-none` | No indicator shown |
-| 0.5 – 2 | Ember | `heat-ember` | Small dim orange dot |
-| 2 – 4 | Spark | `heat-spark` | Small flame icon, warm orange |
-| 4 – 7 | Flame | `heat-flame` | Bright flame icon, orange-red |
-| 7 – 10 | Burn | `heat-burn` | Flame with outer glow effect |
-| 10+ | Wildfire | `heat-wildfire` | Animated flame, red-orange pulse |
+### Immediate Heat Update (don't wait for cron)
 
-### Rules
-- New ideas start with heat = 0 and show NO fire indicator (no "0 fires" shame)
-- First fire on any idea triggers the "Ember" state immediately (don't wait for cron)
-- One user_fingerprint can only fire an idea once (UNIQUE constraint)
-- Real-time fire count displayed on cards updates via optimistic UI (increment on click, revalidate on next page load)
+When someone fires an idea:
+1. Increment `fire_count` in DB
+2. Recalculate heat for ONLY that idea in real-time (lightweight)
+3. This ensures the spectrum label updates immediately, not after 24hrs
+
+The daily cron still runs for global recalculation and decay.
 
 ---
 
 ## 5. API Routes
 
-### Public (no auth required)
+### Public
 
 ```
-GET    /api/ideas                    — List ideas (paginated, sorted by heat or recency)
-  Query params:
-    sort: "hot" | "new" (default: "hot")
-    category: string (optional filter)
-    page: number (default: 1)
-    limit: number (default: 20, max: 50)
-  Returns: { ideas: Idea[], total: number, page: number }
+GET  /api/ideas
+  Query: sort ("hot" | "new"), page (default 1), limit (default 30)
+  Returns only verified ideas (is_verified = true)
+  Response: { ideas: Idea[], total: number, page: number }
 
-GET    /api/ideas/[id]               — Get single idea with full pitch
-  Returns: { idea: IdeaDetail }
+GET  /api/ideas/[id]
+  Returns single idea (must be verified)
+  Side effect: record view (insert into views table, deduplicated by fingerprint)
+  Side effect: increment view_count on idea
+  Side effect: recalculate heat for this idea
+  Response: { idea: IdeaDetail }
 
-POST   /api/ideas/[id]/fire          — Fire an idea
+POST /api/ideas/[id]/fire
   Body: { fingerprint: string }
-  Returns: { success: boolean, fire_count: number }
-  Rules:
-    - Check UNIQUE(idea_id, fingerprint)
-    - If duplicate, return { success: false, already_fired: true }
-    - On success, increment ideas.fire_count
-    - On success, trigger notification to idea author (async)
+  Side effect: insert fire (deduplicated)
+  Side effect: increment fire_count
+  Side effect: recalculate heat for this idea
+  Response: { success: boolean, already_fired: boolean }
 
-GET    /api/search                   — Semantic search
-  Query params:
-    q: string (natural language query)
-    limit: number (default: 5, max: 10)
+POST /api/ideas
+  Body: { title, one_liner, pitch, tags, email }
   Process:
-    1. Generate embedding from query using OpenAI
-    2. Query pgvector for nearest neighbors by cosine similarity
-    3. If top result similarity < 0.5, flag as "weak match"
-    4. Return results with similarity scores
-  Returns: { results: SearchResult[], has_strong_match: boolean }
+    1. Validate all fields
+    2. Generate 8-char ID (check for collision)
+    3. Parse tags (comma split, lowercase, trim, max 5)
+    4. Generate verification_token (random 64-char hex)
+    5. Insert idea with is_verified = false
+    6. Send verification email via Resend
+    7. Return idea ID and "check your email" message
+  Response: { id: string, message: "Check your email to publish" }
 
-GET    /api/ideas/categories         — List all categories with idea counts
-  Returns: { categories: { name: string, count: number }[] }
-```
-
-### Protected (auth required)
-
-```
-POST   /api/ideas                    — Create a new idea
-  Body: {
-    title: string (max 100 chars),
-    one_liner: string (max 200 chars),
-    pitch: string (max 5000 chars),
-    category: string (optional)
-  }
+GET  /api/verify/[token]
   Process:
-    1. Validate input
-    2. Generate embedding from title + one_liner + pitch
-    3. Insert into ideas table
-    4. Return created idea
-  Returns: { idea: IdeaDetail }
-
-GET    /api/me/ideas                 — Get current user's ideas with fire stats
-  Returns: { ideas: IdeaWithStats[] }
-
-GET    /api/me/stats                 — Get current user's aggregate stats
-  Returns: { total_ideas: number, total_fires: number, hottest_idea: Idea | null }
+    1. Find idea with matching verification_token
+    2. Set is_verified = true
+    3. Clear verification_token
+    4. Redirect to /idea/[id] with success message
 ```
 
-### Cron / Internal
+### Cron
 
 ```
-POST   /api/cron/recalculate-heat    — Daily heat recalculation
-  Auth: Vercel cron secret or API key
-  Process: Run heat algorithm for all ideas
-  Returns: { updated: number }
+POST /api/cron/recalculate-heat
+  Auth: CRON_SECRET header
+  Process: recalculate heat for all verified ideas using formula
+  Log results to daily_heat_log
+  Response: { updated: number }
 ```
 
 ---
 
 ## 6. Pages & Routes
 
-### Public Pages
-
 ```
-/                           — Homepage: idea feed
-/idea/[id]                  — Idea detail page
-/idea/[id]/[slug]           — Idea detail with SEO-friendly slug
-/search                     — Search results page
-/ideas/[category]           — Category landing page (SEO)
-/login                      — Magic link login
-/about                      — Simple about page
+/                    — Homepage: dynamic grid of ideas
+/idea/[id]           — Idea detail page (8-char ID)
+/new                 — Post a new idea form
+/about               — What is Idea Commons (simple, one page)
+/api/verify/[token]  — Email verification redirect (not a visible page)
 ```
 
-### Protected Pages
-
-```
-/dashboard                  — Creator dashboard (my ideas + stats)
-/new                        — Post a new idea form
-```
+**No login page. No dashboard. No settings. No profile. No search page.**
 
 ---
 
 ## 7. UI Specifications
 
 ### Design Principles
-- Craigslist energy: functional, not pretty. But not ugly — clean and legible.
-- No hero sections, no gradients, no stock photos
-- Monospace or distinctive font for headings (personality)
-- System font stack for body (speed)
-- Warm color palette: cream/off-white background, dark text, orange-red fire accents
-- Dense feed — show 10+ ideas above the fold on desktop
-- Mobile-first: most users will browse on phones
+- Clean, warm, alive — not corporate, not ugly
+- The grid of idea cards IS the product. Make it feel like browsing a bazaar.
+- Fire spectrum is visual and felt, not numerical
+- Mobile: single column, full-width cards
+- Tablet: 2 columns
+- Desktop: 3-4 columns, dynamic masonry layout
+- Cards have varying heights based on content length → masonry fills gaps
 
 ### Color Palette
 
 ```css
 :root {
-  --bg-primary: #FDFBF7;        /* warm off-white */
-  --bg-card: #FFFFFF;            /* white cards */
-  --text-primary: #1A1A1A;      /* near-black */
-  --text-secondary: #6B6B6B;    /* muted gray */
-  --fire-ember: #D97706;        /* amber-600 */
-  --fire-spark: #EA580C;        /* orange-600 */
-  --fire-flame: #DC2626;        /* red-600 */
-  --fire-burn: #B91C1C;         /* red-700 */
-  --fire-wildfire: #991B1B;     /* red-800 */
-  --accent: #EA580C;            /* orange-600, CTAs */
-  --border: #E5E5E5;            /* light gray borders */
+  --bg-primary: #FDFBF7;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-muted: #9CA3AF;
+  --border: #E5E5E5;
+  --accent: #EA580C;
+
+  /* Fire spectrum colors */
+  --fire-ash: #9CA3AF;
+  --fire-ember: #D97706;
+  --fire-spark: #EA580C;
+  --fire-flame: #DC2626;
+  --fire-blaze: #B91C1C;
+  --fire-inferno: #991B1B;
+  --fire-wildfire: #7F1D1D;
 }
 ```
 
 ### Homepage Layout
 
 ```
-┌─────────────────────────────────────────────┐
-│ 🔥 Idea Commons          [🔍] [Post Idea]  │
-├─────────────────────────────────────────────┤
-│  [Hot] [New]                                │
-├─────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────┐ │
-│ │ 🔥🔥 Spark                              │ │
-│ │ AI-powered scheduling for freelancers   │ │
-│ │ Never double-book a client again.       │ │
-│ │ 23 fires · Posted 4 hours ago           │ │
-│ └─────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────┐ │
-│ │ 🟠 Ember                                │ │
-│ │ Shazam but for bird songs               │ │
-│ │ Point your phone at any bird sound...   │ │
-│ │ 7 fires · Posted 2 days ago             │ │
-│ └─────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────┐ │
-│ │                                         │ │
-│ │ Tiny homes rental marketplace           │ │
-│ │ Airbnb specifically for tiny homes...   │ │
-│ │ Posted 1 hour ago                       │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│          [Load more ideas]                  │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  🔥 idea commons                          [post idea]  │
+├──────────────────────────────────────────────────────────┤
+│  [hot]  [new]                                            │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────┐ ┌───────────────┐ ┌──────────┐            │
+│  │ 🔥 Spark │ │               │ │ Ash      │            │
+│  │          │ │ 🔥🔥 Blaze    │ │          │            │
+│  │ AI sched │ │               │ │ Tiny     │            │
+│  │ for free │ │ Shazam but    │ │ homes    │            │
+│  │ lancers  │ │ for bird      │ │ rental   │            │
+│  │          │ │ songs — point │ │ market   │            │
+│  │ Never    │ │ your phone    │ │          │            │
+│  │ double.. │ │ at any bird   │ │ Airbnb.. │            │
+│  │          │ │ sound and     │ │          │            │
+│  │ #saas    │ │ instantly     │ │ #market  │            │
+│  │ #tools   │ │ identify the  │ │ #housing │            │
+│  └──────────┘ │ species       │ └──────────┘            │
+│               │               │ ┌──────────┐            │
+│  ┌──────────┐ │ #consumer     │ │          │            │
+│  │          │ │ #nature #ai   │ │ Invoic.. │            │
+│  │ 🔥 Flame │ └───────────────┘ │          │            │
+│  │ ...      │                   │ #fintech │            │
+│  └──────────┘                   └──────────┘            │
+│                                                          │
+│               [ load more ]                              │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Masonry Grid Implementation:**
+- Use CSS `columns` property (simplest, no JS needed) OR
+- Use CSS Grid with `grid-auto-rows: 1px` + JS to measure card heights OR
+- Use a lightweight masonry library (e.g., react-masonry-css — 2KB)
+- Recommended: CSS columns approach for V1 (simplest, good enough)
+
+```css
+.idea-grid {
+  columns: 1;
+  column-gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .idea-grid { columns: 2; }
+}
+
+@media (min-width: 1024px) {
+  .idea-grid { columns: 3; }
+}
+
+@media (min-width: 1280px) {
+  .idea-grid { columns: 4; }
+}
+
+.idea-card {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+```
+
+### Idea Card
+
+```
+┌──────────────────────┐
+│ 🔥 Spark             │  ← fire spectrum label + icon (or nothing if below threshold)
+│                      │
+│ AI scheduling for    │  ← title (bold, prominent)
+│ freelancers          │
+│                      │
+│ Never double-book    │  ← one-liner (muted color)
+│ a client again.      │
+│                      │
+│ #saas #scheduling    │  ← tags (small, muted)
+│ 4 hours ago          │  ← relative timestamp
+└──────────────────────┘
 ```
 
 **Card Rules:**
-- Fire indicator only shows if heat > 0.5 (no empty states)
-- Fire count only shows if > 0 ("23 fires")
-- If fire count is 0, show only "Posted X ago" (no "0 fires" text)
-- Seed ideas show a subtle "💡 Seed" badge (small, not prominent)
-- Cards are clickable — entire card is a link to detail page
-- On hover: subtle elevation/shadow change
-
-### Search UX
-
-Default state: magnifying glass icon in header, compact.
-
-On click/focus: expands to input field with placeholder text:
-```
-What's your problem?
-```
-
-User types natural language (e.g., "how do I stop wasting time on scheduling").
-
-Results page shows:
-- Matching ideas ranked by relevance
-- Each result shows: title, one-liner, fire state, similarity indicator
-- If no strong matches: "We don't have anything for that yet. Want to post it as an idea?" with CTA to /new, pre-filled with their search query as a starting point.
+- Entire card is clickable → links to /idea/[id]
+- Fire spectrum label: only show if heat > 0.3 (otherwise nothing)
+- NO fire count. NO view count. NO numbers of any kind.
+- Tags shown as small muted text with # prefix
+- Timestamp as relative ("4 hours ago", "2 days ago")
+- Card height varies naturally based on title/one-liner length → masonry fills gaps
+- Hover: subtle shadow lift
 
 ### Idea Detail Page
 
 ```
-┌─────────────────────────────────────────────┐
-│ ← Back to feed                              │
-├─────────────────────────────────────────────┤
-│                                             │
-│ AI-powered scheduling for freelancers       │
-│ Never double-book a client again.           │
-│                                             │
-│ 🔥🔥 Spark · 23 fires                       │
-│                                             │
-│ ┌─────────────────────────────────────────┐ │
-│ │                                         │ │
-│ │ [Full pitch text here, rendered as      │ │
-│ │  markdown. Can include paragraphs,      │ │
-│ │  bullet points, etc. Max 5000 chars.]   │ │
-│ │                                         │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│ Posted by anon_user · 4 hours ago           │
-│ Category: SaaS                              │
-│                                             │
-│        [ 🔥 Fire this idea ]                │
-│                                             │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ ← back                                       │
+├──────────────────────────────────────────────┤
+│                                              │
+│  AI scheduling for freelancers               │  ← title (large)
+│  Never double-book a client again.           │  ← one-liner
+│                                              │
+│  🔥🔥 Spark                                  │  ← spectrum label, prominent
+│                                              │
+│  ┌──────────────────────────────────────────┐│
+│  │                                          ││
+│  │  Freelancers waste an average of 4       ││  ← pitch (markdown rendered)
+│  │  hours per week on scheduling.           ││
+│  │                                          ││
+│  │  **The problem:**                        ││
+│  │  Calendly doesn't understand project     ││
+│  │  context. You end up with back-to-back   ││
+│  │  calls that leave no time for deep work. ││
+│  │                                          ││
+│  │  **The idea:**                           ││
+│  │  An AI scheduler that understands your   ││
+│  │  work patterns and protects focus time.  ││
+│  │                                          ││
+│  └──────────────────────────────────────────┘│
+│                                              │
+│  #saas  #scheduling  #ai                     │  ← tags
+│  Posted 4 hours ago                          │  ← timestamp
+│                                              │
+│          [ 🔥 Fire this idea ]               │  ← fire button
+│                                              │
+│  ─────────────────────────────────────────── │
+│  Share this idea: ideacommons.co/idea/a1b2c3 │  ← permanent short link
+│                                              │
+└──────────────────────────────────────────────┘
 ```
 
-**Fire Button Behavior:**
-1. User clicks "🔥 Fire this idea"
-2. Button immediately changes to "🔥 Fired!" (optimistic UI)
-3. Fire count increments by 1 visually
-4. POST /api/ideas/[id]/fire in background
-5. If user already fired, button shows "🔥 Fired" (disabled state) on page load
-6. Subtle animation on fire: button briefly scales up + flame icon pulses
-7. No login required — tracked by fingerprint (IP + UA hash)
+**Fire Button States:**
+1. Default: `[ 🔥 Fire this idea ]` — clickable
+2. After click: `[ 🔥 Fired! ]` — disabled, warm background, brief scale animation
+3. On revisit (already fired): `[ 🔥 Fired ]` — disabled state
+
+**Markdown Rendering:**
+- Use `react-markdown` with `remark-gfm` for GitHub-flavored markdown
+- Allowed: headings, bold, italic, lists, links, code blocks, blockquotes
+- Disallowed: images, HTML, iframes (sanitize)
+- Style markdown content with Tailwind Typography plugin (`prose` class)
 
 ### Post Idea Page (`/new`)
 
 ```
-┌─────────────────────────────────────────────┐
-│ Post your idea                              │
-├─────────────────────────────────────────────┤
-│                                             │
-│ Title (max 100 characters)                  │
-│ ┌─────────────────────────────────────────┐ │
-│ │ e.g. "Shazam for bird songs"            │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│ One-liner (max 200 characters)              │
-│ ┌─────────────────────────────────────────┐ │
-│ │ e.g. "Point your phone at any bird..."  │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│ Full pitch (max 5000 characters)            │
-│ ┌─────────────────────────────────────────┐ │
-│ │                                         │ │
-│ │ Describe the problem, the solution,     │ │
-│ │ and why this could work.                │ │
-│ │                                         │ │
-│ │                                    0/5k │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│ Category (optional)                         │
-│ [ SaaS ▼ ]                                  │
-│                                             │
-│         [ Post idea ]                       │
-│                                             │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ Post your idea                               │
+├──────────────────────────────────────────────┤
+│                                              │
+│ Title                                        │
+│ ┌──────────────────────────────────────────┐ │
+│ │ e.g. "Shazam for bird songs"             │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ One-liner                                    │
+│ ┌──────────────────────────────────────────┐ │
+│ │ e.g. "Point your phone at any bird..."   │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ Full pitch (supports markdown)               │
+│ ┌──────────────────────────────────────────┐ │
+│ │                                          │ │
+│ │ Describe the problem, the solution,      │ │
+│ │ and why this could work.                 │ │
+│ │                                          │ │
+│ │ You can use **bold**, *italic*,          │ │
+│ │ - bullet lists                           │ │
+│ │ and other markdown formatting.           │ │
+│ │                                     0/5k │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ Tags (comma separated)                       │
+│ ┌──────────────────────────────────────────┐ │
+│ │ e.g. saas, scheduling, ai               │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ Your email (for verification only — never    │
+│ shown publicly)                              │
+│ ┌──────────────────────────────────────────┐ │
+│ │ you@example.com                          │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│         [ Submit idea ]                      │
+│                                              │
+└──────────────────────────────────────────────┘
 ```
 
-**Categories (predefined list):**
-- SaaS
-- Consumer
-- AI / ML
-- Fintech
-- Health
-- Education
-- Developer Tools
-- E-commerce
-- Marketplace
-- Social
-- Hardware
-- Climate / Energy
-- Other
+**After submit (success page / state):**
+```
+┌──────────────────────────────────────────────┐
+│                                              │
+│  ✓ Almost there!                             │
+│                                              │
+│  We sent a verification link to              │
+│  you@example.com                             │
+│                                              │
+│  Click the link in the email to make         │
+│  your idea public.                           │
+│                                              │
+│  Your idea will live at:                     │
+│  ideacommons.co/idea/a1b2c3d4                │
+│                                              │
+│  [ ← Back to ideas ]                        │
+│                                              │
+└──────────────────────────────────────────────┘
+```
 
 **Validation Rules:**
 - Title: required, 3-100 characters
 - One-liner: required, 10-200 characters
 - Pitch: required, 50-5000 characters
-- Category: optional, must be from predefined list
-- User must be authenticated (redirect to /login if not)
+- Tags: optional, comma-separated, each tag 2-30 chars, max 5 tags, auto-lowercase, trim whitespace
+- Email: required, valid email format
 
-### Creator Dashboard (`/dashboard`)
+### Email Verification Flow
 
-```
-┌─────────────────────────────────────────────┐
-│ Your Ideas                                  │
-├─────────────────────────────────────────────┤
-│                                             │
-│ Total ideas: 5  ·  Total fires: 47          │
-│                                             │
-│ ┌─────────────────────────────────────────┐ │
-│ │ 🔥🔥 Spark                              │ │
-│ │ AI scheduling for freelancers           │ │
-│ │ 23 fires · 142 views · Posted 4 days    │ │
-│ │ ▁▂▃▅▇ (fire trend mini-chart)          │ │
-│ └─────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────┐ │
-│ │ 🟠 Ember                                │ │
-│ │ Shazam for bird songs                   │ │
-│ │ 7 fires · 34 views · Posted 2 days      │ │
-│ │ ▁▁▂▂▃ (fire trend mini-chart)          │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│           [ Post new idea ]                 │
-└─────────────────────────────────────────────┘
-```
+**Service: Resend** (https://resend.com)
+- Free tier: 100 emails/day, 3000/month
+- Simple API: one POST request to send
+- No account system needed — just transactional email
 
-**Fire trend mini-chart:** A tiny sparkline showing daily fire count for the past 7 days. Use the `daily_heat_log` table data. Can be rendered as a simple SVG or CSS bar chart — does not need a charting library.
-
----
-
-## 8. Email Notifications
-
-### Fire Notification
-
-**Trigger:** When someone fires an idea, send email to the idea's author.
-
-**Debounce rule:** Do NOT send per-fire. Batch notifications:
-- First fire ever on an idea: send immediately ("Your idea just got its first fire! 🔥")
-- Subsequent fires: batch and send max once per hour ("Your idea got 5 new fires in the last hour")
-- Max 3 notification emails per day per user
-
-**Subject lines:**
-- First fire: "🔥 Your idea just got its first fire"
-- Batched: "🔥 Your idea '[title]' got [N] new fires"
-- Milestone: "🔥🔥 Your idea hit [Spark/Flame/Burn/Wildfire]!"
-
-**Email body (plain, minimal):**
+**Verification email:**
 
 ```
+From: ideas@ideacommons.co
+Subject: Verify your idea on Idea Commons
+
 Hey,
 
-Your idea "[title]" just got fired.
+Click below to publish your idea:
 
-[N] people have now fired this idea. It's currently at [heat label] status.
+  "[idea title]"
 
-See how it's doing: [link to idea detail page]
+[Verify and publish →]
+(links to: https://ideacommons.co/api/verify/[token])
 
-— Idea Commons
-```
+This link expires in 24 hours.
 
-### Magic Link Email
-
-**Subject:** "Sign in to Idea Commons"
-
-**Body:**
-```
-Click here to sign in:
-
-[magic link button]
-
-This link expires in 10 minutes.
+If you didn't submit this idea, ignore this email.
 
 — Idea Commons
 ```
 
----
+**Verification flow:**
+1. User submits idea → idea saved with `is_verified = false`
+2. Verification email sent with unique token
+3. User clicks link → hits `/api/verify/[token]`
+4. API sets `is_verified = true`, clears token
+5. Redirects to `/idea/[id]` with query param `?verified=true`
+6. Idea detail page shows brief success banner: "Your idea is now live! 🔥"
+7. Token expires after 24 hours (cron cleans up unverified ideas older than 24h)
 
-## 9. SEO Category Pages
-
-Generate static pages at build time (or ISR) for each category:
-
-```
-/ideas/saas           → "SaaS Startup Ideas Catching Fire"
-/ideas/ai             → "AI Startup Ideas People Want Built"
-/ideas/fintech        → "Fintech Startup Ideas With Real Demand"
-/ideas/consumer       → "Consumer Startup Ideas Trending Now"
-/ideas/developer-tools → "Developer Tool Ideas Gaining Traction"
-... (one per category)
-```
-
-Each page shows:
-- SEO-optimized title and meta description
-- Filtered feed of ideas in that category, sorted by heat
-- "Post an idea in [category]" CTA
-- Total idea count and total fires in category
-
-**Meta tags per page:**
-```html
-<title>[Category] Startup Ideas Catching Fire | Idea Commons</title>
-<meta name="description" content="Browse [N] [category] startup ideas ranked by real interest. See which ideas people actually want built." />
-<meta property="og:title" content="[Category] Startup Ideas | Idea Commons" />
-<meta property="og:description" content="[N] ideas, [M] total fires. See what's trending." />
-```
+**Unverified ideas:**
+- Never shown in feed
+- Never returned by search
+- Never accessible via direct URL (return 404)
+- Cleaned up by cron after 24 hours
 
 ---
 
-## 10. Fingerprinting Strategy
+## 8. Fingerprinting
 
-For anonymous fire tracking without requiring login:
+Same as v1.0.0 — SHA-256 of IP + User-Agent.
 
 ```typescript
-function generateFingerprint(req: Request): string {
-  const ip = req.headers.get('x-forwarded-for') || 'unknown';
-  const ua = req.headers.get('user-agent') || 'unknown';
-  const raw = `${ip}::${ua}`;
-  return sha256(raw);
+import { createHash } from 'crypto';
+
+function getFingerprint(request: Request): string {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ua = request.headers.get('user-agent') || 'unknown';
+  return createHash('sha256').update(`${ip}::${ua}`).digest('hex').substring(0, 16);
 }
 ```
 
-**Rules:**
-- Fingerprint is a SHA-256 hash — we never store raw IP or UA
-- One fingerprint can fire each idea only once (UNIQUE constraint in DB)
-- If a logged-in user fires, store BOTH fingerprint AND user_id
-- On login, do NOT retroactively merge anonymous fires to user account (V1 simplicity — merge is a V2 feature)
+Note: truncate to 16 chars (still 16^16 = 18 quintillion possibilities, plenty unique).
 
-**Limitations accepted in V1:**
-- Different browsers/devices = different fingerprints = can fire twice (acceptable)
-- VPN/proxy users may share fingerprints (acceptable, log compression helps)
-- This is "good enough" anti-abuse for V1, not bulletproof
+Used for:
+- Fire deduplication (one fire per fingerprint per idea)
+- View deduplication (one view per fingerprint per idea)
+- Never stored as raw IP/UA — only the hash
 
 ---
 
-## 11. Seed Data
+## 9. About Page (`/about`)
 
-Before launch, seed the database with 200+ ideas marked `is_seed = true`.
+Simple, one-page, no frills.
 
-**Sources for seed ideas:**
-- r/startupideas top posts
-- r/SideProject top posts
-- My First Million podcast episode ideas
-- Greg Isenberg tweets
-- YC Requests for Startups
-- Personal brainstorming
+```
+# Idea Commons
 
-**Seed idea requirements:**
-- Must feel like a real pitch (not filler)
-- Title: clear, specific, catchy
-- One-liner: explains the value prop in one sentence
-- Pitch: 100-300 words explaining problem, solution, why now
-- Must span all categories (aim for 15-20 per category)
-- Generate embeddings for all seed ideas at load time
+A public feed of startup ideas.
 
-**Seed ideas display rule:**
-- Show a subtle "💡 Seed" badge on the card
-- Seed ideas participate in the same heat algorithm as real ideas
-- As real ideas accumulate, deprioritize seeds in the "Hot" sort (multiply seed heat by 0.7)
+**Browse** ideas freely. No signup needed.
+**Fire** the ones worth building.
+**Post** your own idea — takes 60 seconds.
+
+The fire indicator shows how much interest an idea is getting.
+It's not a like count — it's a heat signal based on
+sustained attention from real people over time.
+
+Ideas start invisible. As people notice them, they warm up:
+ash → ember → spark → flame → blaze → inferno → wildfire.
+
+That's it. No comments, no profiles, no noise.
+Just ideas and signal.
+
+Built by [your name/handle].
+```
 
 ---
 
-## 12. Implementation Order
+## 10. Implementation Order
 
-Build in this exact sequence. Each step should be a deployable, working state.
+Six steps. Each one is a deployable state.
 
 ### Step 1: Project scaffold + database
-- Initialize Next.js project with TypeScript + Tailwind
+- Initialize Next.js with TypeScript + Tailwind
 - Set up Supabase project
 - Run all CREATE TABLE migrations
-- Set up environment variables
+- Install dependencies: nanoid, react-markdown, remark-gfm
 - Deploy empty app to Vercel
-- **Commit message:** `feat: initialize project with Next.js, Supabase, and database schema`
+- **Commit:** `feat: scaffold Next.js project with Supabase schema and dependencies`
 
-### Step 2: Idea feed (read-only)
-- Build homepage with idea card components
-- Implement GET /api/ideas with pagination
-- Sort tabs: "Hot" (by heat) and "New" (by created_at)
-- Responsive layout (mobile-first)
-- Load seed data into database
-- **Commit message:** `feat: implement public idea feed with hot/new sorting and pagination`
+### Step 2: Idea feed with masonry grid
+- Build homepage with dynamic masonry grid layout
+- Build idea card component (title, one-liner, tags, timestamp, fire spectrum)
+- Implement GET /api/ideas with pagination and sorting (hot/new)
+- Sort tabs: hot (by heat desc) and new (by created_at desc)
+- Only return verified ideas
+- Mobile: 1 col, tablet: 2 col, desktop: 3-4 col
+- "Load more" button for pagination
+- **Commit:** `feat: implement masonry idea feed with hot/new sorting and responsive grid`
 
-### Step 3: Idea detail page
+### Step 3: Idea detail page + view tracking
 - Build /idea/[id] page
-- Display full pitch (rendered as markdown)
-- Show fire state, fire count, category, timestamp
-- Back-to-feed navigation
-- SEO meta tags per idea
-- **Commit message:** `feat: add idea detail page with full pitch and metadata`
+- Render pitch as markdown (react-markdown + remark-gfm)
+- Display fire spectrum label (no counts)
+- Display tags, relative timestamp
+- Show permanent short link (ideacommons.co/idea/[id])
+- Record view on page load (deduplicated by fingerprint)
+- Increment view_count
+- Return 404 for unverified or non-existent ideas
+- **Commit:** `feat: add idea detail page with markdown rendering and view tracking`
 
-### Step 4: Fire button
+### Step 4: Fire button + heat algorithm
 - Build fire API endpoint (POST /api/ideas/[id]/fire)
-- Implement fingerprinting
-- Add fire button component with optimistic UI
-- Animate on click (scale + pulse)
-- Show "Fired!" disabled state if already fired
-- Heat label display on cards and detail page
-- **Commit message:** `feat: implement fire button with fingerprinting, optimistic UI, and heat labels`
+- Fingerprint-based deduplication
+- Fire button component with optimistic UI and animation
+- Implement heat formula (fires + views weighted)
+- Real-time heat recalculation on fire and view
+- Heat-to-spectrum label mapping
+- Fire spectrum visual indicators on cards and detail page
+- Build cron endpoint for daily global heat recalculation
+- Set up Vercel cron schedule
+- **Commit:** `feat: implement fire mechanic with heat algorithm and spectrum display`
 
-### Step 5: Authentication
-- Set up Supabase magic link auth
-- Build /login page
-- Auth state management (context/provider)
-- Protected route wrapper for /new and /dashboard
-- **Commit message:** `feat: add magic link email authentication with protected routes`
+### Step 5: Post an idea + email verification
+- Build /new page with form (title, one-liner, pitch, tags, email)
+- Client-side validation
+- Server-side validation + sanitization
+- 8-char ID generation with collision check
+- Tag parsing (comma split, lowercase, trim, max 5)
+- Generate verification token
+- Save idea as unverified
+- Send verification email via Resend
+- Build /api/verify/[token] endpoint
+- Redirect to idea page on successful verification
+- Success banner on idea page when ?verified=true
+- Post-submit confirmation page ("check your email")
+- Cron: clean up unverified ideas older than 24 hours
+- **Commit:** `feat: add idea posting with email verification`
 
-### Step 6: Post an idea
-- Build /new page with form
-- Input validation (client + server)
-- Generate embedding on submission via OpenAI API
-- Insert idea into database
-- Redirect to new idea's detail page after posting
-- **Commit message:** `feat: add idea submission form with validation and embedding generation`
-
-### Step 7: Heat algorithm cron
-- Build /api/cron/recalculate-heat endpoint
-- Implement the heat formula
-- Log to daily_heat_log table
-- Set up Vercel cron schedule (daily 00:00 UTC)
-- Also run immediate mini-recalc on first fire (so new ideas don't wait 24hrs)
-- **Commit message:** `feat: implement daily heat recalculation cron with decay algorithm`
-
-### Step 8: Creator dashboard
-- Build /dashboard page
-- List user's ideas with fire counts and view counts
-- Show fire trend sparklines (past 7 days from daily_heat_log)
-- Show aggregate stats (total ideas, total fires)
-- **Commit message:** `feat: add creator dashboard with idea stats and fire trend sparklines`
-
-### Step 9: Email notifications
-- Set up Resend integration
-- Fire notification emails (first fire + batched)
-- Heat milestone emails (Spark, Flame, Burn, Wildfire)
-- Debounce logic (max 3 emails/day/user)
-- **Commit message:** `feat: add fire notification emails with debouncing and milestone alerts`
-
-### Step 10: Semantic search
-- Build search UI (expandable search bar in header)
-- Build GET /api/search endpoint
-- Query pgvector for cosine similarity matches
-- Results page with relevance ranking
-- Empty state: "No match found — post this as an idea?" with pre-filled form
-- **Commit message:** `feat: implement semantic search with pgvector and empty-state idea creation CTA`
-
-### Step 11: SEO category pages
-- Build /ideas/[category] pages
-- Static generation or ISR for each category
-- SEO meta tags, open graph tags
-- Category index at /ideas showing all categories with counts
-- **Commit message:** `feat: add SEO-optimized category landing pages with meta tags`
-
-### Step 12: Polish + launch prep
-- Add view counting (increment on idea detail page load)
-- Add "Posted X ago" relative timestamps
-- Add favicon, og:image, site metadata
-- Error handling and loading states on all pages
-- 404 page
-- /about page (simple: what is this, how it works, link to post)
-- Performance audit (Core Web Vitals)
-- **Commit message:** `feat: add view tracking, polish UI, error handling, and launch-ready metadata`
+### Step 6: Polish + launch prep
+- About page
+- Proper 404 page
+- Loading states and error handling on all pages
+- Favicon and og:image
+- Site-wide meta tags (title, description, og tags)
+- Validate all pages on mobile
+- Performance check (< 2s load time)
+- **Commit:** `feat: add about page, error handling, meta tags, and launch polish`
 
 ---
 
-## 13. Git Workflow
+## 11. Definition of Done (V1 Launch Ready)
 
-### Branch Strategy
-- `main` — production, always deployable
-- `dev` — active development branch
-- Feature branches off `dev`: `feat/fire-button`, `feat/search`, etc.
+- [ ] Homepage loads masonry grid in < 2 seconds on mobile
+- [ ] Grid is responsive: 1 col mobile, 2 tablet, 3-4 desktop
+- [ ] Hot and New sort tabs work correctly
+- [ ] Fire spectrum labels display correctly for all 7 tiers
+- [ ] No engagement numbers shown anywhere (no counts, no stats)
+- [ ] Fire button works without any account
+- [ ] Fire button shows fired state on revisit (fingerprint check)
+- [ ] Posting requires email and sends verification email
+- [ ] Verification email link makes idea public
+- [ ] Unverified ideas are never visible
+- [ ] Pitch renders markdown correctly
+- [ ] Tags are free-form, comma-separated, stored as array
+- [ ] Short URLs work (ideacommons.co/idea/[8chars])
+- [ ] About page exists
+- [ ] No console errors in production
+- [ ] Works on mobile Safari and Chrome
 
-### Commit Message Format
+---
 
+## 12. Git Workflow
+
+- `main` — production
+- `dev` — active development
+- Feature branches: `feat/fire-button`, `feat/posting`, etc.
+
+**Commit format:**
 ```
 type: short description
 
-Detailed explanation of what changed and why.
-
-Refs: #issue (if applicable)
+What changed and why.
 ```
 
-Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`, `test`
-
-### After Each Step
-1. Complete the implementation
-2. Test locally
-3. Commit with the specified commit message
-4. Push to dev
-5. Verify deployment on Vercel preview
-6. Merge to main when stable
+**After each step:** commit, push, verify Vercel preview, merge to main.
 
 ---
 
-## 14. Definition of Done (V1 Launch Ready)
-
-V1 is launch-ready when ALL of the following are true:
-
-- [ ] Homepage loads in < 2 seconds on mobile
-- [ ] Feed displays ideas sorted by hot and new
-- [ ] Fire button works without login
-- [ ] Fire button shows correct state on reload (fired/not fired)
-- [ ] Posting requires email auth and works end-to-end
-- [ ] Heat labels display correctly for all tiers
-- [ ] Search returns relevant results for natural language queries
-- [ ] Search empty state offers to create an idea
-- [ ] Creator dashboard shows ideas with fire stats
-- [ ] Email notifications send on first fire
-- [ ] At least 200 seed ideas loaded across all categories
-- [ ] All SEO category pages render with correct meta tags
-- [ ] Site works on mobile (responsive)
-- [ ] No console errors in production
-- [ ] Deployed to production domain on Vercel
-
----
-
-## 15. Post-Launch Immediate Tasks (not part of V1 build)
-
-Once V1 is live and stable, these are the first priorities:
-
-1. Submit to Google Search Console for indexing
-2. Write Show HN post
-3. Create Indie Hackers product page
-4. Set up Plausible/Umami analytics
-5. Monitor error logs for first 48 hours
-6. Personally DM 30 people with their ideas pre-loaded
-7. Track day-2 retention as primary metric
-
----
-
-## Appendix A: Type Definitions
+## Appendix: Type Definitions
 
 ```typescript
 interface Idea {
-  id: string;
+  id: string;                    // 8-char alphanumeric
   title: string;
   one_liner: string;
-  category: string | null;
-  is_seed: boolean;
+  tags: string[];
   heat: number;
-  fire_count: number;
   created_at: string;
 }
 
 interface IdeaDetail extends Idea {
-  pitch: string;
-  author_id: string | null;
-  view_count: number;
+  pitch: string;                 // raw markdown
+  view_count: number;            // internal only, never displayed
+  fire_count: number;            // internal only, never displayed
   updated_at: string;
-}
-
-interface IdeaWithStats extends IdeaDetail {
-  daily_fires: { date: string; count: number }[];
-}
-
-interface SearchResult {
-  idea: Idea;
-  similarity: number;
 }
 
 interface FireResponse {
   success: boolean;
-  already_fired?: boolean;
-  fire_count: number;
+  already_fired: boolean;
 }
 
-type HeatLabel = 'none' | 'ember' | 'spark' | 'flame' | 'burn' | 'wildfire';
+interface CreateIdeaInput {
+  title: string;
+  one_liner: string;
+  pitch: string;
+  tags: string;                  // raw comma-separated string from form
+  email: string;
+}
 
-function getHeatLabel(heat: number): HeatLabel {
-  if (heat >= 10) return 'wildfire';
-  if (heat >= 7) return 'burn';
-  if (heat >= 4) return 'flame';
-  if (heat >= 2) return 'spark';
-  if (heat >= 0.5) return 'ember';
+type FireSpectrum =
+  | 'none'       // heat < 0.3
+  | 'ash'        // 0.3 – 1.0
+  | 'ember'      // 1.0 – 2.5
+  | 'spark'      // 2.5 – 4.5
+  | 'flame'      // 4.5 – 7.0
+  | 'blaze'      // 7.0 – 10.0
+  | 'inferno'    // 10.0 – 15.0
+  | 'wildfire';  // 15.0+
+
+function getFireSpectrum(heat: number): FireSpectrum {
+  if (heat >= 15) return 'wildfire';
+  if (heat >= 10) return 'inferno';
+  if (heat >= 7) return 'blaze';
+  if (heat >= 4.5) return 'flame';
+  if (heat >= 2.5) return 'spark';
+  if (heat >= 1) return 'ember';
+  if (heat >= 0.3) return 'ash';
   return 'none';
 }
 ```
 
 ---
 
-*End of build specification. Next amendment will be `build-v1-01.md`.*
+*End of build specification v1 (DRAFT). Next amendment will be `build-v1-01.md`.*
