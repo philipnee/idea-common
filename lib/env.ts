@@ -27,7 +27,7 @@ export const env = {
   siteUrl: readEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000"),
   storePath:
     process.env.LITBOARD_STORE_PATH?.trim() ||
-    path.join(process.cwd(), "data", "runtime-store.json"),
+    path.join(process.cwd(), "data", "runtime-store.db"),
   storeTemplatePath:
     process.env.LITBOARD_STORE_TEMPLATE_PATH?.trim() ||
     path.join(process.cwd(), "data", "store.json"),

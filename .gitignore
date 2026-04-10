@@ -8,3 +8,6 @@ data/runtime-store.json
 data/dev-template-store.json
 data/dev-runtime-store.json
 data/prod-runtime-store.json
+data/*.db
+data/*.db-shm
+data/*.db-wal
