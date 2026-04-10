@@ -29,6 +29,7 @@ Add this service to `~/pnee.uk/deploy/docker-compose.yml` under `services:`.
       LITBOARD_STORE_PATH: /app/data/prod-runtime-store.db
       LITBOARD_STORE_TEMPLATE_PATH: /app/data/store.json
       LITBOARD_TAGGING_TAXONOMY_PATH: /app/content/tag-taxonomy.txt
+      LITBOARD_IDEA_VERIFICATION_PROMPT_PATH: /app/content/idea-verification-prompt.txt
       LITBOARD_TAGGING_TIMEOUT_MS: "5000"
       LITBOARD_TAGGING_KEYWORD_FALLBACK: "true"
       GEMINI_MODEL: ${GEMINI_MODEL:-}
@@ -80,6 +81,12 @@ Optional Gemini tagging:
 ```bash
 GEMINI_MODEL=gemini-2.0-flash-lite
 GEMINI_API_KEY=<api key>
+```
+
+Optional editable verification prompt path:
+
+```bash
+LITBOARD_IDEA_VERIFICATION_PROMPT_PATH=/app/content/idea-verification-prompt.txt
 ```
 
 ## Start Or Restart

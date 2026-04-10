@@ -1,7 +1,16 @@
+import { readFile } from "node:fs/promises";
 import { appConfig, isGeminiVerificationConfigured } from "@/lib/config";
 
 const JUNK_MESSAGE =
   "Post a concrete idea, not a reaction, placeholder, or throwaway phrase.";
+const DEFAULT_GEMINI_PROMPT = [
+  "You classify short public submissions for Litboard.",
+  "Litboard accepts ideas, useful proposals, and interesting things worth sharing.",
+  'Return JSON only: {"isJunk": boolean}.',
+  "Reject only clearly bad submissions: gibberish, keyboard mash, placeholder text, empty filler, profanity, insults, unconstructive reactions, or meta comments that do not share or propose anything.",
+  "Accept rough, weird, terse, unfinished, or broad submissions if they contain a constructive idea, proposal, useful observation, or interesting thing to share.",
+  "Use a light touch. Block unconstructive junk, not imperfect ideas."
+].join("\n");
 
 const PLACEHOLDER_PHRASES = new Set([
   "asdf",
@@ -212,8 +221,9 @@ async function runGeminiIdeaCheck(idea: string) {
     return "skipped" as const;
   }
 
-  const { apiKey, endpointBase, model } = appConfig.aiVerification;
+  const { apiKey, endpointBase, model, promptPath } = appConfig.aiVerification;
   const endpoint = `${endpointBase.replace(/\/$/, "")}/models/${model}:generateContent?key=${apiKey}`;
+  const prompt = await readVerificationPrompt(promptPath);
 
   try {
     const response = await fetch(endpoint, {
@@ -228,14 +238,7 @@ async function runGeminiIdeaCheck(idea: string) {
             parts: [
               {
                 text: [
-                  "You classify short public idea submissions.",
-                  'Return JSON only: {"isJunk": boolean}.',
-                  "Mark true when the text is not a concrete idea.",
-                  "Reject gibberish, keyboard mash, placeholder text, meaningless filler, insults, profanity-only reactions, meta comments, and throwaway opinions.",
-                  "Reject submissions containing profanity, even if they otherwise look understandable.",
-                  "Reject phrases like 'this is bullshit', 'this sucks', 'lol', or 'nice idea' because they are reactions, not ideas.",
-                  "Mark false only when the text proposes a concrete product, service, tool, project, workflow, community, marketplace, or other buildable concept.",
-                  "Allow terse, rough, unusual, or imperfect ideas if there is a real proposal inside.",
+                  prompt,
                   `Submission: ${idea}`
                 ].join("\n")
               }
@@ -275,6 +278,15 @@ async function runGeminiIdeaCheck(idea: string) {
     return parsed.isJunk ? ("rejected" as const) : ("accepted" as const);
   } catch {
     return "skipped" as const;
+  }
+}
+
+async function readVerificationPrompt(promptPath: string) {
+  try {
+    const prompt = (await readFile(promptPath, "utf8")).trim();
+    return prompt || DEFAULT_GEMINI_PROMPT;
+  } catch {
+    return DEFAULT_GEMINI_PROMPT;
   }
 }
 

@@ -82,7 +82,10 @@ export const appConfig = {
     apiKey: process.env.GEMINI_API_KEY?.trim() ?? "",
     endpointBase:
       process.env.GEMINI_BASE_URL?.trim() ||
-      "https://generativelanguage.googleapis.com/v1beta"
+      "https://generativelanguage.googleapis.com/v1beta",
+    promptPath:
+      process.env.LITBOARD_IDEA_VERIFICATION_PROMPT_PATH?.trim() ||
+      path.join(process.cwd(), "content", "idea-verification-prompt.txt")
   },
   heat: {
     dailyCarryFactor: readNonNegativeNumber("HEAT_DAILY_CARRY_FACTOR", 0.3),
