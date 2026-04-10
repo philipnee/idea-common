@@ -1,7 +1,7 @@
 import { appConfig, isGeminiVerificationConfigured } from "@/lib/config";
 
 const JUNK_MESSAGE =
-  "Make it more concrete. Use a short real idea, not placeholder or gibberish text.";
+  "Post a concrete idea, not a reaction, placeholder, or throwaway phrase.";
 
 const PLACEHOLDER_PHRASES = new Set([
   "asdf",
@@ -15,6 +15,80 @@ const PLACEHOLDER_PHRASES = new Set([
   "startup idea",
   "test",
   "test idea"
+]);
+
+const THROWAWAY_PHRASES = [
+  /\bthis\s+is\s+(bullshit|bs|shit|crap|trash|garbage|dumb|stupid)\b/i,
+  /\b(this|that|it)\s+(sucks|blows)\b/i,
+  /\b(dog|dogs|bull)\s*shit\b/i,
+  /^\s*(bullshit|bs|shit|crap|trash|garbage|nope|lol|lmao)\s*$/i
+];
+
+const PROFANITY_WORDS = new Set([
+  "asshole",
+  "bitch",
+  "bullshit",
+  "crap",
+  "damn",
+  "dick",
+  "fuck",
+  "fucking",
+  "shit",
+  "shitty"
+]);
+
+const IDEA_ACTION_WORDS = new Set([
+  "add",
+  "allow",
+  "automate",
+  "build",
+  "create",
+  "design",
+  "find",
+  "generate",
+  "help",
+  "let",
+  "make",
+  "map",
+  "match",
+  "organize",
+  "post",
+  "recommend",
+  "search",
+  "share",
+  "track"
+]);
+
+const IDEA_NOUN_WORDS = new Set([
+  "agent",
+  "agents",
+  "app",
+  "board",
+  "bot",
+  "browser",
+  "city",
+  "community",
+  "dashboard",
+  "directory",
+  "exchange",
+  "feed",
+  "forum",
+  "idea",
+  "ideas",
+  "list",
+  "map",
+  "market",
+  "marketplace",
+  "network",
+  "platform",
+  "product",
+  "search",
+  "service",
+  "site",
+  "software",
+  "system",
+  "tool",
+  "website"
 ]);
 
 function getWords(value: string) {
@@ -36,6 +110,14 @@ function looksLikePlaceholder(idea: string, words: string[]) {
   }
 
   return words.length >= 2 && new Set(words).size === 1;
+}
+
+function looksLikeThrowawayReaction(idea: string) {
+  return THROWAWAY_PHRASES.some((pattern) => pattern.test(idea));
+}
+
+function containsProfanity(words: string[]) {
+  return words.some((word) => PROFANITY_WORDS.has(word));
 }
 
 function hasTooManySymbols(idea: string) {
@@ -62,6 +144,14 @@ function looksLikeGibberishWord(word: string) {
   return vowels / letters.length < 0.25 && hasLongConsonantRun;
 }
 
+function hasIdeaShape(words: string[]) {
+  const hasAction = words.some((word) => IDEA_ACTION_WORDS.has(word));
+  const hasIdeaNoun = words.some((word) => IDEA_NOUN_WORDS.has(word));
+  const hasConnector = words.includes("for") || words.includes("to");
+
+  return hasAction || hasIdeaNoun || hasConnector;
+}
+
 export function runDeterministicIdeaChecks(idea: string) {
   const words = getWords(idea);
 
@@ -81,12 +171,24 @@ export function runDeterministicIdeaChecks(idea: string) {
     return JUNK_MESSAGE;
   }
 
+  if (looksLikeThrowawayReaction(idea)) {
+    return JUNK_MESSAGE;
+  }
+
+  if (containsProfanity(words)) {
+    return JUNK_MESSAGE;
+  }
+
   const substantiveWords = words.filter((word) => word.length >= 4);
 
   if (
     substantiveWords.length >= 2 &&
     substantiveWords.every((word) => looksLikeGibberishWord(word))
   ) {
+    return JUNK_MESSAGE;
+  }
+
+  if (words.length <= 4 && !hasIdeaShape(words)) {
     return JUNK_MESSAGE;
   }
 
@@ -128,8 +230,12 @@ async function runGeminiIdeaCheck(idea: string) {
                 text: [
                   "You classify short public idea submissions.",
                   'Return JSON only: {"isJunk": boolean}.',
-                  "Mark true only when the text is obvious gibberish, keyboard mash, placeholder text, or meaningless filler.",
-                  "Mark false for terse, rough, unusual, or imperfect but plausible ideas.",
+                  "Mark true when the text is not a concrete idea.",
+                  "Reject gibberish, keyboard mash, placeholder text, meaningless filler, insults, profanity-only reactions, meta comments, and throwaway opinions.",
+                  "Reject submissions containing profanity, even if they otherwise look understandable.",
+                  "Reject phrases like 'this is bullshit', 'this sucks', 'lol', or 'nice idea' because they are reactions, not ideas.",
+                  "Mark false only when the text proposes a concrete product, service, tool, project, workflow, community, marketplace, or other buildable concept.",
+                  "Allow terse, rough, unusual, or imperfect ideas if there is a real proposal inside.",
                   `Submission: ${idea}`
                 ].join("\n")
               }
