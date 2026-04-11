@@ -37,40 +37,68 @@ export function SiteShell({
           <span className="h-px w-4 bg-white" />
         </span>
       </Link>
-      <div className="mx-auto flex max-w-3xl flex-col gap-7">
-        <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
-            <Link href="/" className="inline-flex">
-              <MatchMark
-                className={
-                  largeBrand ? "h-20 w-14 sm:h-24 sm:w-16" : "h-16 w-12 sm:h-20 sm:w-14"
-                }
-              />
-            </Link>
-            <div className="space-y-3">
-              <h1 className="font-display text-5xl italic leading-none tracking-tight text-ink sm:text-[3.6rem]">
-                {resolvedTitle}
-              </h1>
+      <div className={largeBrand ? "mx-auto flex max-w-[60rem] flex-col gap-6" : "mx-auto flex max-w-3xl flex-col gap-7"}>
+        {largeBrand ? (
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <Link href="/" className="inline-flex items-center gap-3">
+                <span className="text-[2.5rem] leading-none" aria-hidden="true">
+                  🔥
+                </span>
+                <span className="font-display text-[2.4rem] leading-none tracking-[-0.01em] text-[#1a1a1a]">
+                  {resolvedTitle}
+                </span>
+              </Link>
+              <p className="mt-2 max-w-lg font-mono text-[13px] font-light leading-6 text-[#6b6b6b]">
+                {description}
+              </p>
               {tagline ? (
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                   {tagline}
                 </p>
               ) : null}
-              <p className="max-w-lg font-mono text-[12px] leading-6 text-muted">
-                {description}
-              </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {isDevMode ? <DevResetButton /> : null}
-            <Link
-              href={current === "post" ? "/" : "/new"}
-              className="inline-flex items-center justify-center border border-[#111111] bg-[#111111] px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
-            >
-              {current === "post" ? "Back" : "POST"}
-            </Link>
-          </div>
-        </header>
+            <div className="flex items-center gap-3">
+              {isDevMode ? <DevResetButton /> : null}
+              <Link
+                href="/new"
+                className="inline-flex items-center justify-center bg-[#1a1a1a] px-6 py-3 font-mono text-[13px] uppercase tracking-[0.08em] text-[#fdfbf7] transition hover:bg-[#ea580c]"
+              >
+                Post
+              </Link>
+            </div>
+          </header>
+        ) : (
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+              <Link href="/" className="inline-flex">
+                <MatchMark className="h-16 w-12 sm:h-20 sm:w-14" />
+              </Link>
+              <div className="space-y-3">
+                <h1 className="font-display text-5xl italic leading-none tracking-tight text-ink sm:text-[3.6rem]">
+                  {resolvedTitle}
+                </h1>
+                {tagline ? (
+                  <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                    {tagline}
+                  </p>
+                ) : null}
+                <p className="max-w-lg font-mono text-[12px] leading-6 text-muted">
+                  {description}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {isDevMode ? <DevResetButton /> : null}
+              <Link
+                href={current === "post" ? "/" : "/new"}
+                className="inline-flex items-center justify-center border border-[#111111] bg-[#111111] px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
+              >
+                {current === "post" ? "Back" : "POST"}
+              </Link>
+            </div>
+          </header>
+        )}
         {children}
       </div>
     </main>

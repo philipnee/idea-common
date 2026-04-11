@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { IdeaCard } from "@/components/idea-card";
 import type { IdeaSort, IdeaSummary } from "@/lib/types";
 
@@ -21,7 +21,6 @@ export function IdeaFeed({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setIdeas(initialIdeas);
@@ -77,47 +76,35 @@ export function IdeaFeed({
     }
   }
 
-  useEffect(() => {
-    if (!hasMore || !sentinelRef.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          void loadMore();
-        }
-      },
-      { rootMargin: "240px 0px" }
-    );
-
-    observer.observe(sentinelRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMore, ideas.length, isLoading, sort]);
-
   return (
-    <div className="space-y-4">
+    <div>
       {showDevTags ? (
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
           {ideas.length} loaded
         </p>
       ) : null}
-      <section className="grid gap-3 md:grid-cols-2">
+      <section className="columns-1 gap-4 sm:columns-2 lg:columns-3">
         {ideas.map((idea) => (
           <IdeaCard key={idea.id} idea={idea} showDevTags={showDevTags} />
         ))}
       </section>
       {hasMore ? (
-        <div
-          ref={sentinelRef}
-          className="flex min-h-16 items-center justify-center"
-        >
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-            {loadError ? loadError : isLoading ? "Loading more" : "Scroll for more"}
-          </p>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          {loadError ? (
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-red-700">
+              {loadError}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              void loadMore();
+            }}
+            disabled={isLoading}
+            className="border border-[#1a1a1a] bg-transparent px-8 py-3 font-mono text-[12px] uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:bg-[#1a1a1a] hover:text-[#fdfbf7] disabled:cursor-wait disabled:opacity-70"
+          >
+            {isLoading ? "Loading" : "Load more"}
+          </button>
         </div>
       ) : null}
     </div>

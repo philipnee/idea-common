@@ -1,9 +1,55 @@
 import { DevTagMeta } from "@/components/dev-tag-meta";
+import { CardFireButton } from "@/components/card-fire-button";
 import Link from "next/link";
-import { FirePill } from "@/components/fire-pill";
 import { joinClasses } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
-import type { IdeaSummary } from "@/lib/types";
+import type { FireLevel, IdeaSummary } from "@/lib/types";
+
+const heatMeta: Record<FireLevel | "ash", { icon: string; label: string; className: string }> = {
+  ash: {
+    icon: "💨",
+    label: "Ash",
+    className: "bg-[rgba(156,163,175,0.12)] text-[#9ca3af]"
+  },
+  0: {
+    icon: "",
+    label: "",
+    className: ""
+  },
+  1: {
+    icon: "🔥",
+    label: "Ember",
+    className: "bg-[rgba(217,119,6,0.1)] text-[#d97706]"
+  },
+  2: {
+    icon: "🔥",
+    label: "Spark",
+    className: "bg-[rgba(234,88,12,0.12)] text-[#ea580c]"
+  },
+  3: {
+    icon: "🔥",
+    label: "Flame",
+    className: "bg-[rgba(220,38,38,0.1)] text-[#dc2626]"
+  },
+  4: {
+    icon: "🔥",
+    label: "Blaze",
+    className: "bg-[rgba(185,28,28,0.12)] text-[#b91c1c]"
+  },
+  5: {
+    icon: "💥",
+    label: "Supernova",
+    className: "bg-[rgba(127,29,29,0.15)] text-[#7f1d1d]"
+  }
+};
+
+function getHeatMeta(idea: IdeaSummary) {
+  if (idea.fireLevel === 0) {
+    return idea.heat > 0 ? heatMeta.ash : null;
+  }
+
+  return heatMeta[idea.fireLevel];
+}
 
 export function IdeaCard({
   idea,
@@ -12,58 +58,70 @@ export function IdeaCard({
   idea: IdeaSummary;
   showDevTags?: boolean;
 }) {
-  const toneClass = joinClasses(
-    idea.fireLevel === 0 && "border-[#ddd0bf] bg-[#f5efe5] hover:border-[#cdbca7]",
-    idea.fireLevel === 1 && "border-[#e4c98f] bg-[#f7ecd5] hover:border-[#d7b477]",
-    idea.fireLevel === 2 && "border-[#dfad69] bg-[#f4dfbf] hover:border-[#cf9450]",
-    idea.fireLevel === 3 && "border-[#d68757] bg-[#f0c9a7] hover:border-[#c96f40]",
-    idea.fireLevel === 4 && "border-[#c5653c] bg-[#ebb092] hover:border-[#b6542e] shadow-[0_12px_28px_rgba(197,101,60,0.14)]",
-    idea.fireLevel === 5 && "border-[#ad4828] bg-[#e19479] hover:border-[#963a1f] shadow-[0_16px_34px_rgba(173,72,40,0.2)]"
-  );
+  const heat = getHeatMeta(idea);
+  const tags = [idea.kind, idea.topic].filter(Boolean);
 
   return (
-    <Link
-      href={`/ideas/${idea.id}`}
-      className={joinClasses(
-        "group flex min-h-[15rem] flex-col justify-between border px-4 py-4 shadow-card transition duration-150 hover:-translate-y-0.5",
-        toneClass
-      )}
-    >
-      <div className="space-y-4">
+    <article className="mb-4 break-inside-avoid bg-[#f5f0e8] p-6 transition duration-200 hover:-translate-y-px hover:shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <Link href={`/ideas/${idea.id}`} className="block">
         <div className="flex items-start justify-between gap-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#9ca3af]">
             {formatRelativeTime(idea.createdAt)}
           </p>
-          <FirePill fireLevel={idea.fireLevel} small />
+          {heat ? (
+            <span
+              className={joinClasses(
+                "inline-flex items-center gap-1 px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.06em]",
+                heat.className
+              )}
+            >
+              <span aria-hidden="true" className="text-[0.8rem] leading-none">
+                {heat.icon}
+              </span>
+              <span>{heat.label}</span>
+            </span>
+          ) : null}
         </div>
-        {showDevTags ? (
+        <div className="mt-3 space-y-2">
+          <h2 className="font-display text-[1.15rem] font-normal leading-snug tracking-[-0.01em] text-[#1a1a1a]">
+            {idea.idea}
+          </h2>
+          {idea.excerpt ? (
+            <p className="line-clamp-3 font-mono text-[13px] font-light leading-6 text-[#6b6b6b]">
+              {idea.excerpt}
+            </p>
+          ) : null}
+        </div>
+      </Link>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span key={tag} className="font-mono text-[10px] tracking-[0.03em] text-[#9ca3af]">
+              #{tag}
+            </span>
+          ))}
+        </div>
+        <CardFireButton ideaId={idea.id} />
+      </div>
+
+      {showDevTags ? (
+        <div className="mt-3">
           <DevTagMeta
             kind={idea.kind}
             topic={idea.topic}
             tagSource={idea.tagSource}
             compact
-            showSourceLabel={false}
+            showSourceLabel
             showEmptyState={false}
           />
-        ) : null}
-        <div className="space-y-3">
-          <h2 className="font-mono text-[20px] leading-8 tracking-[-0.02em] text-ink">
-            {idea.idea}
-          </h2>
-          {idea.excerpt ? (
-            <p className="max-w-[34ch] text-[13px] leading-6 text-[#5d5044]">
-              {idea.excerpt}
-            </p>
-          ) : null}
         </div>
-      </div>
-      <div className="pt-5">
+      ) : null}
+      <div>
         {showDevTags ? (
-          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
-            dev view
-          </p>
+          <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">dev view</p>
         ) : null}
       </div>
-    </Link>
+    </article>
   );
 }

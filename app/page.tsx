@@ -32,10 +32,10 @@ export default async function HomePage({
     <SiteShell
       current={sort}
       title="Litboard"
-      description="Public ideas worth passing around. Post one fast, then light the ones that deserve more attention."
+      description="Post an idea. See if it catches fire."
     >
-      <section className="grid gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center">
-        <div className="inline-flex w-fit border border-[#ddd0bf] bg-[#ebe2d4] p-1 shadow-card">
+      <section>
+        <div className="inline-flex">
           {([
             { value: "all", label: "All", href: "/" },
             { value: "hot", label: "Lit", href: "/?sort=lit" },
@@ -45,10 +45,10 @@ export default async function HomePage({
               key={tab.value}
               href={tab.href}
               className={joinClasses(
-                "px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] transition",
+                "px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.08em] transition",
                 sort === tab.value
-                  ? "bg-[#111111] text-white"
-                  : "text-muted hover:text-ink"
+                  ? "bg-[#1a1a1a] text-[#fdfbf7]"
+                  : "text-[#9ca3af] hover:text-[#1a1a1a]"
               )}
             >
               {tab.label}

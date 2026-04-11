@@ -22,20 +22,18 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "\"Iowan Old Style\"",
-          "\"Palatino Linotype\"",
-          "\"Book Antiqua\"",
-          "Georgia",
+          "\"DM Mono\"",
+          "\"SFMono-Regular\"",
+          "ui-monospace",
           "sans-serif"
         ],
         display: [
-          "\"Iowan Old Style\"",
-          "\"Palatino Linotype\"",
-          "\"Book Antiqua\"",
+          "\"DM Serif Display\"",
           "Georgia",
           "serif"
         ],
         mono: [
+          "\"DM Mono\"",
           "\"SFMono-Regular\"",
           "ui-monospace",
           "monospace"
