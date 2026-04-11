@@ -22,6 +22,7 @@ Usage:
   scripts/admin.sh delete --dry-run <idea-url-or-id>
   scripts/admin.sh rekey
   scripts/admin.sh rekey --dry-run
+  scripts/admin.sh stats [idea-url-or-id]   # view/fire counts
   scripts/admin.sh logs [litboard|cloudflared|all]
   scripts/admin.sh restart
   scripts/admin.sh ps
@@ -69,6 +70,13 @@ case "$command" in
       run_in_litboard node scripts/rekey-readable-idea-ids.mjs --dry-run "$DB_PATH"
     else
       run_in_litboard node scripts/rekey-readable-idea-ids.mjs "$DB_PATH"
+    fi
+    ;;
+  stats)
+    if [[ $# -gt 0 ]]; then
+      run_in_litboard node scripts/idea-stats.mjs "$1" "$DB_PATH"
+    else
+      run_in_litboard node scripts/idea-stats.mjs "$DB_PATH"
     fi
     ;;
   logs)
