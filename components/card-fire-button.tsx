@@ -38,10 +38,10 @@ export function CardFireButton({ ideaId }: { ideaId: string }) {
       onClick={handleClick}
       disabled={isFired || isPending}
       className={joinClasses(
-        "inline-flex shrink-0 items-center gap-1 border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.05em] transition",
+        "inline-flex shrink-0 items-center gap-1 border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.05em]",
         isFired
           ? "border-[#ea580c] bg-[#ea580c] text-[#fdfbf7]"
-          : "border-[#ea580c] bg-transparent text-[#ea580c] hover:bg-[#ea580c] hover:text-[#fdfbf7]",
+          : "border-[#ea580c] bg-transparent text-[#ea580c]",
         isPending && "cursor-wait opacity-80"
       )}
     >

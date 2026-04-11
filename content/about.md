@@ -6,7 +6,7 @@ Ideas are cheap. That's the point. The expensive part is finding out if anyone c
 
 Instead of likes, we use a heuristic to calculate how hot your idea is. One tap does not make a flame; visible heat starts when more people show interest.
 
-- 💨 Ash — it exists. Someone glanced at it.
+- 🪵 — it exists. Someone glanced at it.
 
 - 🔥 Ember — a quiet glow. People are curious.
 
@@ -18,6 +18,6 @@ Instead of likes, we use a heuristic to calculate how hot your idea is. One tap 
 
 - 💥 Supernova — stop reading this and go build it.
 
-Heat rises when real people pay attention over time. It decays when they don't. A first self-tap is treated as baseline smoke; the signal comes from additional people coming back to the idea.
+Heat rises when real people pay attention over time. It decays when they don't. A first self-tap is treated as wood without fire; the signal comes from additional people coming back to the idea.
 Post an idea. Share the link. Check back tomorrow.
 Most ideas die in a notes app or a group chat where someone replies "cool" and changes the subject. Some of them deserved better. Litboard is where they get a shot.

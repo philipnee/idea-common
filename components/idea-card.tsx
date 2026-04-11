@@ -7,8 +7,8 @@ import type { FireLevel, IdeaSummary } from "@/lib/types";
 
 const heatMeta: Record<FireLevel | "ash", { icon: string; label: string; className: string }> = {
   ash: {
-    icon: "💨",
-    label: "Ash",
+    icon: "🪵",
+    label: "",
     className: "bg-[rgba(156,163,175,0.12)] text-[#9ca3af]"
   },
   0: {
@@ -62,7 +62,7 @@ export function IdeaCard({
   const tags = [idea.kind, idea.topic].filter(Boolean);
 
   return (
-    <article className="mb-4 break-inside-avoid bg-[#f5f0e8] p-6 transition duration-200 hover:-translate-y-px hover:shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+    <article className="mb-4 break-inside-avoid bg-[#f5f0e8] p-6">
       <Link href={`/ideas/${idea.id}`} className="block">
         <div className="flex items-start justify-between gap-4">
           <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#9ca3af]">
@@ -78,7 +78,7 @@ export function IdeaCard({
               <span aria-hidden="true" className="text-[0.8rem] leading-none">
                 {heat.icon}
               </span>
-              <span>{heat.label}</span>
+              {heat.label ? <span>{heat.label}</span> : null}
             </span>
           ) : null}
         </div>
