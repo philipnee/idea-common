@@ -98,7 +98,7 @@ export function FireButton({
             : `Available again at ${formatNextFire(nextFireAt) ?? "later"}`
         }
         className={joinClasses(
-          "inline-flex h-14 w-14 items-center justify-center border text-2xl transition",
+          "inline-flex h-16 w-16 items-center justify-center border text-3xl transition",
           !canFire
             ? "border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
             : "border-[#111111] bg-[#111111] text-white hover:bg-black",
