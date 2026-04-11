@@ -29,6 +29,7 @@ export function FireButton({
   const [canFire, setCanFire] = useState(initialCanFire);
   const [nextFireAt, setNextFireAt] = useState(initialNextFireAt);
   const [error, setError] = useState("");
+  const nextFireLabel = formatNextFire(nextFireAt);
 
   useEffect(() => {
     if (!nextFireAt) {
@@ -81,10 +82,6 @@ export function FireButton({
     });
   }
 
-  if (!canFire && !error) {
-    return null;
-  }
-
   return (
     <div className="flex w-full flex-col items-center gap-3">
       <button
@@ -100,7 +97,7 @@ export function FireButton({
         className={joinClasses(
           "group inline-flex w-full max-w-[20rem] items-center justify-center gap-2 border-2 px-8 py-4 font-mono text-[14px] font-medium uppercase tracking-[0.08em] transition active:scale-[0.97]",
           !canFire
-            ? "border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
+            ? "cursor-not-allowed border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
             : "border-[#ea580c] bg-transparent text-[#ea580c] hover:-translate-y-px hover:bg-[#ea580c] hover:text-[#fdfbf7] hover:shadow-[0_4px_12px_rgba(234,88,12,0.25)]",
           isPending && "cursor-wait opacity-80"
         )}
@@ -111,10 +108,13 @@ export function FireButton({
         >
           🔥
         </span>
-        <span>
-          Fire this idea
-        </span>
+        <span>{canFire ? "Fire this idea" : "Fired"}</span>
       </button>
+      {!canFire && nextFireLabel ? (
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+          Available again at {nextFireLabel}
+        </p>
+      ) : null}
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>
   );
