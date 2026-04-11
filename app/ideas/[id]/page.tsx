@@ -3,7 +3,6 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { FireButton } from "@/components/fire-button";
-import { FirePill } from "@/components/fire-pill";
 import { ShareLinkBar } from "@/components/share-link-bar";
 import { ShareLinkButton } from "@/components/share-link-button";
 import { SiteShell } from "@/components/site-shell";
@@ -57,37 +56,43 @@ export default async function IdeaDetailPage({
 
       <article className="border border-[#e1d5c5] bg-card px-5 py-6 shadow-card sm:px-8 sm:py-8">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <FirePill fireLevel={idea.fireLevel} />
+          <div className="grid gap-4">
+            <div className="flex items-start justify-between gap-4">
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                 {formatRelativeTime(idea.createdAt)}
               </p>
-              {showDevTags ? (
-                <DevTagMeta
-                  kind={idea.kind}
-                  topic={idea.topic}
-                  tagSource={idea.tagSource}
-                  showEmptyState={false}
-                />
-              ) : null}
-              {idea.externalLink ? (
-                <a
-                  href={idea.externalLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-mono text-[11px] tracking-[0.02em] text-[#6f5645] underline decoration-[#c7a98f] underline-offset-4 transition hover:text-ink"
-                >
-                  Source: {formatExternalLinkLabel(idea.externalLink)}
-                </a>
-              ) : null}
               <ShareLinkButton shareUrl={shareUrl} />
             </div>
-            <FireButton
-              ideaId={idea.id}
-              initialCanFire={idea.viewerCanFire}
-              initialNextFireAt={idea.nextFireAt}
-            />
+
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0 space-y-3">
+                {showDevTags ? (
+                  <DevTagMeta
+                    kind={idea.kind}
+                    topic={idea.topic}
+                    tagSource={idea.tagSource}
+                    showEmptyState={false}
+                  />
+                ) : null}
+                {idea.externalLink ? (
+                  <a
+                    href={idea.externalLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[11px] tracking-[0.02em] text-[#6f5645] underline decoration-[#c7a98f] underline-offset-4 transition hover:text-ink"
+                  >
+                    Source: {formatExternalLinkLabel(idea.externalLink)}
+                  </a>
+                ) : null}
+              </div>
+              <div className="shrink-0">
+                <FireButton
+                  ideaId={idea.id}
+                  initialCanFire={idea.viewerCanFire}
+                  initialNextFireAt={idea.nextFireAt}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
