@@ -4,12 +4,7 @@ import { joinClasses } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
 import type { FireLevel, IdeaSummary } from "@/lib/types";
 
-const heatMeta: Record<FireLevel | "ash", { icon: string; label: string; className: string }> = {
-  ash: {
-    icon: "🪵",
-    label: "",
-    className: "bg-[rgba(156,163,175,0.12)] text-[#9ca3af]"
-  },
+const heatMeta: Record<FireLevel, { icon: string; label: string; className: string }> = {
   0: {
     icon: "",
     label: "",
@@ -44,7 +39,7 @@ const heatMeta: Record<FireLevel | "ash", { icon: string; label: string; classNa
 
 function getHeatMeta(idea: IdeaSummary) {
   if (idea.fireLevel === 0) {
-    return idea.heat > 0 ? heatMeta.ash : null;
+    return null;
   }
 
   return heatMeta[idea.fireLevel];
