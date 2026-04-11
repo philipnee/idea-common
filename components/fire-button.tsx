@@ -88,10 +88,10 @@ export function FireButton({
         type="button"
         onClick={handleFire}
         disabled={!canFire || isPending}
-        aria-label={canFire ? "Fire this idea" : "Fire cooling down"}
+        aria-label={canFire ? "Lit this idea" : "Lit cooling down"}
         title={
           canFire
-            ? "Fire this idea"
+            ? "Lit this idea"
             : `Available again at ${formatNextFire(nextFireAt) ?? "later"}`
         }
         className={joinClasses(
@@ -108,7 +108,7 @@ export function FireButton({
         >
           🔥
         </span>
-        <span>{canFire ? "Fire this idea" : "Fired"}</span>
+        <span>{canFire ? "Lit this idea" : "Lit"}</span>
       </button>
       {!canFire && nextFireLabel ? (
         <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
