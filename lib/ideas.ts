@@ -33,6 +33,7 @@ const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 const FIRE_COOLDOWN_MS = appConfig.fire.refireCooldownHours * ONE_HOUR_MS;
 const DAILY_CARRY_FACTOR = appConfig.heat.dailyCarryFactor;
 const VIEW_WEIGHT = appConfig.heat.viewWeight;
+const FIRE_STARTER_COUNT = appConfig.heat.fireStarterCount;
 
 function clampLimit(value: number) {
   if (!Number.isFinite(value) || value <= 0) {
@@ -121,7 +122,7 @@ function getDailyContribution(store: StoreShape, ideaId: string, dayKey: string)
   const uniqueViews = getUniqueDailyAudience(store.views, ideaId, dayKey).size;
 
   return roundHeat(
-    Math.log2(1 + uniqueFires) + VIEW_WEIGHT * Math.log2(1 + uniqueViews)
+    getFireContribution(uniqueFires) + VIEW_WEIGHT * Math.log2(1 + uniqueViews)
   );
 }
 
@@ -185,13 +186,28 @@ function syncIdeaHeat(idea: IdeaRecord, store: StoreShape, targetDayKey: string)
   return heat;
 }
 
-function getContributionDelta(previousCount: number, nextCount: number, weight = 1) {
+function getFireContribution(uniqueFireCount: number) {
+  const countedFires = Math.max(0, uniqueFireCount - FIRE_STARTER_COUNT);
+  return Math.log2(1 + countedFires);
+}
+
+function getLogContributionDelta(previousCount: number, nextCount: number, weight = 1) {
   if (nextCount <= previousCount) {
     return 0;
   }
 
   return roundHeat(
     weight * (Math.log2(1 + nextCount) - Math.log2(1 + previousCount))
+  );
+}
+
+function getFireContributionDelta(previousCount: number, nextCount: number) {
+  if (nextCount <= previousCount) {
+    return 0;
+  }
+
+  return roundHeat(
+    getFireContribution(nextCount) - getFireContribution(previousCount)
   );
 }
 
@@ -516,7 +532,7 @@ export async function getIdeaById(
           createdAt: nowIso()
         });
         idea.heat = roundHeat(
-          idea.heat + getContributionDelta(previousViews, previousViews + 1, VIEW_WEIGHT)
+          idea.heat + getLogContributionDelta(previousViews, previousViews + 1, VIEW_WEIGHT)
         );
         idea.heatDate = todayKey;
       }
@@ -755,7 +771,7 @@ export async function fireIdea(id: string, viewerKey: string): Promise<FireIdeaR
     idea.updatedAt = nowIso();
     if (!alreadyCountedToday) {
       idea.heat = roundHeat(
-        idea.heat + getContributionDelta(previousUniqueFireCount, previousUniqueFireCount + 1)
+        idea.heat + getFireContributionDelta(previousUniqueFireCount, previousUniqueFireCount + 1)
       );
     }
     idea.heatDate = todayKey;

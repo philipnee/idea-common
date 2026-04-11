@@ -89,7 +89,10 @@ export const appConfig = {
   },
   heat: {
     dailyCarryFactor: readNonNegativeNumber("HEAT_DAILY_CARRY_FACTOR", 0.3),
-    viewWeight: readNonNegativeNumber("HEAT_VIEW_WEIGHT", 0.2)
+    viewWeight: readNonNegativeNumber("HEAT_VIEW_WEIGHT", 0.2),
+    fireStarterCount: Math.floor(
+      readNonNegativeNumber("HEAT_FIRE_STARTER_COUNT", 1)
+    )
   },
   tagging: {
     taxonomyPath:
@@ -103,7 +106,7 @@ export const appConfig = {
   },
   fire: {
     refireCooldownHours: readPositiveNumber("FIRE_REFIRE_COOLDOWN_HOURS", 6),
-    emojiThresholds: readOrderedThresholds([0.6, 2.4, 4.5, 7, 10] as const)
+    emojiThresholds: readOrderedThresholds([1, 2.25, 3.5, 5, 7] as const)
   }
 };
 
