@@ -17,7 +17,7 @@ export function NewIdeaForm({
   const router = useRouter();
   const [idea, setIdea] = useState("");
   const [details, setDetails] = useState("");
-  const [externalLink, setExternalLink] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [error, setError] = useState("");
   const [requiresChallenge, setRequiresChallenge] = useState(
     initialRequiresChallenge
@@ -31,11 +31,9 @@ export function NewIdeaForm({
 
     const cleanedIdea = idea.trim();
     const cleanedDetails = details.trim();
-    const cleanedExternalLink = externalLink.trim();
 
     setIdea(cleanedIdea);
     setDetails(cleanedDetails);
-    setExternalLink(cleanedExternalLink);
 
     startTransition(async () => {
       const response = await fetch("/api/ideas", {
@@ -46,7 +44,6 @@ export function NewIdeaForm({
         body: JSON.stringify({
           idea: cleanedIdea,
           details: cleanedDetails,
-          externalLink: cleanedExternalLink,
           postToken: initialPostToken,
           website: "",
           turnstile_token: turnstileToken
@@ -77,82 +74,59 @@ export function NewIdeaForm({
 
   return (
     <form
+      id="post"
       onSubmit={handleSubmit}
-      className="flex flex-col gap-5 border border-[#e1d5c5] bg-card px-4 py-4 shadow-card sm:px-5 sm:py-5"
+      className="flex flex-col gap-4 border border-[#d8ccb9] bg-card px-4 py-4 shadow-card sm:px-5 sm:py-5"
     >
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="idea"
-          className="block font-mono text-[11px] uppercase tracking-[0.18em] text-muted"
+          className="block font-display text-[1.35rem] leading-tight tracking-[-0.01em] text-[#1a1a1a]"
         >
-          What is this idea?
+          Got an idea? Just type it.
         </label>
         <textarea
           id="idea"
           name="idea"
-          rows={3}
+          rows={4}
           maxLength={100}
           required
           value={idea}
           onChange={(event) => setIdea(event.target.value)}
           onBlur={() => setIdea((current) => current.trim())}
-          placeholder="Local library reciprocity pass for remote workers"
-          className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[16px] leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
+          className="w-full resize-none border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[15px] leading-7 text-ink outline-none transition focus:border-[#b99f82]"
         />
-        <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-          <span>One short idea is required.</span>
-          <span>{idea.length}/100</span>
-        </div>
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="details"
-          className="block font-mono text-[11px] uppercase tracking-[0.18em] text-muted"
+      {!showDetails ? (
+        <button
+          type="button"
+          onClick={() => setShowDetails(true)}
+          className="self-start font-mono text-[11px] uppercase tracking-[0.16em] text-muted transition hover:text-[#1a1a1a]"
         >
-          Details
-          <span className="ml-2 font-normal lowercase tracking-normal text-muted">
-            optional
-          </span>
-        </label>
-        <textarea
-          id="details"
-          name="details"
-          rows={6}
-          maxLength={2000}
-          value={details}
-          onChange={(event) => setDetails(event.target.value)}
-          onBlur={() => setDetails((current) => current.trim())}
-          placeholder="Problem, customer, angle, or anything else that helps."
-          className="w-full border border-[#d8ccb9] bg-[#f8f2e9] px-4 py-3 text-sm leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
-        />
-        <div className="text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-          {details.length}/2000
+          + Description
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <label
+            htmlFor="details"
+            className="block font-mono text-[11px] uppercase tracking-[0.16em] text-muted"
+          >
+            Description
+          </label>
+          <textarea
+            id="details"
+            name="details"
+            rows={6}
+            maxLength={2000}
+            value={details}
+            onChange={(event) => setDetails(event.target.value)}
+            onBlur={() => setDetails((current) => current.trim())}
+            placeholder="Add context, links, examples, or why this should exist."
+            className="w-full resize-none border border-[#d8ccb9] bg-[#f8f2e9] px-4 py-3 font-mono text-[13px] leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
+          />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <label
-          htmlFor="external-link"
-          className="block font-mono text-[11px] uppercase tracking-[0.18em] text-muted"
-        >
-          External Link
-          <span className="ml-2 font-normal lowercase tracking-normal text-muted">
-            optional
-          </span>
-        </label>
-        <input
-          id="external-link"
-          name="external_link"
-          type="url"
-          inputMode="url"
-          value={externalLink}
-          onChange={(event) => setExternalLink(event.target.value)}
-          onBlur={() => setExternalLink((current) => current.trim())}
-          placeholder="https://reddit.com/..."
-          className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[14px] text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
-        />
-      </div>
+      )}
 
       <input type="hidden" name="post_token" value={initialPostToken} />
       <input
@@ -189,11 +163,11 @@ export function NewIdeaForm({
           type="submit"
           disabled={isPending}
           className={joinClasses(
-            "inline-flex items-center justify-center border border-[#111111] bg-[#111111] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black",
+            "inline-flex items-center justify-center border border-[#111111] bg-[#111111] px-5 py-3 font-mono text-[12px] tracking-[0.08em] text-white transition hover:bg-black",
             isPending && "cursor-wait opacity-80"
           )}
         >
-          POST
+          Post
         </button>
       </div>
     </form>

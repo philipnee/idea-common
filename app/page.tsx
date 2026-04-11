@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { IdeaFeed } from "@/components/idea-feed";
+import { NewIdeaForm } from "@/components/new-idea-form";
 import { SiteShell } from "@/components/site-shell";
-import { isDevAppMode } from "@/lib/env";
-import { listIdeas } from "@/lib/ideas";
+import { env, isDevAppMode } from "@/lib/env";
+import { getPostingContext, listIdeas } from "@/lib/ideas";
 import { joinClasses } from "@/lib/format";
+import { getRequestKey, issuePostToken } from "@/lib/security";
 import type { IdeaSort } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +19,15 @@ export default async function HomePage({
     page?: string;
   };
 }) {
+  const headerBag = headers();
+  const submitKey = getRequestKey(headerBag);
   const rawSort = searchParams?.sort ?? null;
   const sort: IdeaSort =
     rawSort === "new" ? "new" : rawSort === "lit" || rawSort === "hot" ? "hot" : "all";
   const page = Number(searchParams?.page ?? "1");
   const showDevTags = isDevAppMode();
+  const postToken = issuePostToken();
+  const postingContext = await getPostingContext(submitKey);
   const feed = await listIdeas({
     sort,
     page: Number.isFinite(page) ? page : 1,
@@ -33,7 +40,14 @@ export default async function HomePage({
       current={sort}
       title="Litboard"
       description="Post an idea. See if it catches fire."
+      postHref="#post"
     >
+      <NewIdeaForm
+        initialPostToken={postToken}
+        initialRequiresChallenge={postingContext.requiresChallenge}
+        turnstileSiteKey={env.turnstileSiteKey}
+      />
+
       <section>
         <div className="inline-flex">
           {([
@@ -76,12 +90,12 @@ export default async function HomePage({
           <p className="mx-auto mt-3 max-w-xl font-mono text-[12px] leading-6 text-muted">
             Post one short idea and it lands in the public feed immediately.
           </p>
-          <Link
-            href="/new"
+          <a
+            href="#post"
             className="mt-6 inline-flex border border-[#111111] bg-[#111111] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
           >
-            POST
-          </Link>
+            Post
+          </a>
         </section>
       )}
     </SiteShell>
