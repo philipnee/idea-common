@@ -8,15 +8,13 @@ export function SiteShell({
   current = "all",
   title = "Litboard",
   description = "Public ideas worth passing around. Post one fast, then light the ones that deserve more attention.",
-  tagline,
-  postHref = "/new"
+  tagline
 }: {
   children: React.ReactNode;
   current?: "all" | "hot" | "new" | "post";
   title?: string;
   description?: string;
   tagline?: string | null;
-  postHref?: string;
 }) {
   const largeBrand = current === "all" || current === "hot" || current === "new";
   const isDevMode = isDevAppMode();
@@ -60,15 +58,7 @@ export function SiteShell({
                 </p>
               ) : null}
             </div>
-            <div className="flex items-center gap-3">
-              {isDevMode ? <DevResetButton /> : null}
-              <a
-                href={postHref}
-                className="inline-flex items-center justify-center bg-[#1a1a1a] px-6 py-3 font-mono text-[13px] uppercase tracking-[0.08em] text-[#fdfbf7] transition hover:bg-[#ea580c]"
-              >
-                Post
-              </a>
-            </div>
+            {isDevMode ? <DevResetButton /> : null}
           </header>
         ) : (
           <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">

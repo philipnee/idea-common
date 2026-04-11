@@ -40,7 +40,6 @@ export default async function HomePage({
       current={sort}
       title="Litboard"
       description="Post an idea. See if it catches fire."
-      postHref="#post"
     >
       <NewIdeaForm
         initialPostToken={postToken}
