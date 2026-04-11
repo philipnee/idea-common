@@ -17,22 +17,22 @@ const heatMeta: Record<FireLevel | "ash", { icon: string; label: string; classNa
     className: ""
   },
   1: {
-    icon: "🔥",
+    icon: "",
     label: "Ember",
     className: "bg-[rgba(217,119,6,0.1)] text-[#d97706]"
   },
   2: {
-    icon: "🔥",
+    icon: "",
     label: "Spark",
     className: "bg-[rgba(234,88,12,0.12)] text-[#ea580c]"
   },
   3: {
-    icon: "🔥",
+    icon: "",
     label: "Flame",
     className: "bg-[rgba(220,38,38,0.1)] text-[#dc2626]"
   },
   4: {
-    icon: "🔥",
+    icon: "",
     label: "Blaze",
     className: "bg-[rgba(185,28,28,0.12)] text-[#b91c1c]"
   },
@@ -75,9 +75,11 @@ export function IdeaCard({
                 heat.className
               )}
             >
-              <span aria-hidden="true" className="text-[0.8rem] leading-none">
-                {heat.icon}
-              </span>
+              {heat.icon ? (
+                <span aria-hidden="true" className="text-[0.8rem] leading-none">
+                  {heat.icon}
+                </span>
+              ) : null}
               {heat.label ? <span>{heat.label}</span> : null}
             </span>
           ) : null}

@@ -45,9 +45,6 @@ export function CardFireButton({ ideaId }: { ideaId: string }) {
         isPending && "cursor-wait opacity-80"
       )}
     >
-      <span aria-hidden="true" className="text-[0.85rem] leading-none">
-        🔥
-      </span>
       <span>{isFired ? "fired" : "fire"}</span>
     </button>
   );
