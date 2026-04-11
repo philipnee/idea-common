@@ -1,5 +1,4 @@
 import { DevTagMeta } from "@/components/dev-tag-meta";
-import { CardFireButton } from "@/components/card-fire-button";
 import Link from "next/link";
 import { joinClasses } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
@@ -96,16 +95,15 @@ export function IdeaCard({
         </div>
       </Link>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+      {tags.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
           {tags.map((tag) => (
             <span key={tag} className="font-mono text-[10px] tracking-[0.03em] text-[#9ca3af]">
               #{tag}
             </span>
           ))}
         </div>
-        <CardFireButton ideaId={idea.id} />
-      </div>
+      ) : null}
 
       {showDevTags ? (
         <div className="mt-3">
