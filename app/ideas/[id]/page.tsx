@@ -78,7 +78,7 @@ export default async function IdeaDetailPage({
             ) : null}
           </div>
 
-          <div className="flex items-end justify-between gap-4 pt-2">
+          <div className="flex flex-col items-stretch gap-4 pt-2 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0 space-y-3">
               {showDevTags ? (
                 <DevTagMeta
@@ -99,7 +99,7 @@ export default async function IdeaDetailPage({
                 </a>
               ) : null}
             </div>
-            <div className="shrink-0">
+            <div className="w-full sm:w-auto sm:shrink-0">
               <FireButton
                 ideaId={idea.id}
                 initialCanFire={idea.viewerCanFire}
