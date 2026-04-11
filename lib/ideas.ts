@@ -160,23 +160,7 @@ function computeIdeaHeatForDay(
   store: StoreShape,
   targetDayKey: string
 ) {
-  if (!idea.heatDate) {
-    return computeIdeaHeatFromScratch(idea, store, targetDayKey);
-  }
-
-  if (idea.heatDate >= targetDayKey) {
-    return roundHeat(idea.heat);
-  }
-
-  let dayKey = idea.heatDate;
-  let heat = idea.heat;
-
-  while (dayKey < targetDayKey) {
-    dayKey = addDayKey(dayKey);
-    heat = DAILY_CARRY_FACTOR * heat + getDailyContribution(store, idea.id, dayKey);
-  }
-
-  return roundHeat(heat);
+  return computeIdeaHeatFromScratch(idea, store, targetDayKey);
 }
 
 function syncIdeaHeat(idea: IdeaRecord, store: StoreShape, targetDayKey: string) {

@@ -29,6 +29,14 @@ export function NewIdeaForm({
     event.preventDefault();
     setError("");
 
+    const cleanedIdea = idea.trim();
+    const cleanedDetails = details.trim();
+    const cleanedExternalLink = externalLink.trim();
+
+    setIdea(cleanedIdea);
+    setDetails(cleanedDetails);
+    setExternalLink(cleanedExternalLink);
+
     startTransition(async () => {
       const response = await fetch("/api/ideas", {
         method: "POST",
@@ -36,9 +44,9 @@ export function NewIdeaForm({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          idea,
-          details,
-          externalLink,
+          idea: cleanedIdea,
+          details: cleanedDetails,
+          externalLink: cleanedExternalLink,
           postToken: initialPostToken,
           website: "",
           turnstile_token: turnstileToken
@@ -87,6 +95,7 @@ export function NewIdeaForm({
           required
           value={idea}
           onChange={(event) => setIdea(event.target.value)}
+          onBlur={() => setIdea((current) => current.trim())}
           placeholder="Local library reciprocity pass for remote workers"
           className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[16px] leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
         />
@@ -113,6 +122,7 @@ export function NewIdeaForm({
           maxLength={2000}
           value={details}
           onChange={(event) => setDetails(event.target.value)}
+          onBlur={() => setDetails((current) => current.trim())}
           placeholder="Problem, customer, angle, or anything else that helps."
           className="w-full border border-[#d8ccb9] bg-[#f8f2e9] px-4 py-3 text-sm leading-7 text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
         />
@@ -138,6 +148,7 @@ export function NewIdeaForm({
           inputMode="url"
           value={externalLink}
           onChange={(event) => setExternalLink(event.target.value)}
+          onBlur={() => setExternalLink((current) => current.trim())}
           placeholder="https://reddit.com/..."
           className="w-full border border-[#d8ccb9] bg-[#fbf7f0] px-4 py-3 font-mono text-[14px] text-ink outline-none transition placeholder:text-[#9b8c7d] focus:border-[#b99f82]"
         />
