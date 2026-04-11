@@ -4,17 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { joinClasses } from "@/lib/format";
 
-function formatNextFire(nextFireAt: string | null) {
-  if (!nextFireAt) {
-    return null;
-  }
-
-  return new Date(nextFireAt).toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
-
 export function FireButton({
   ideaId,
   initialCanFire,
@@ -29,7 +18,6 @@ export function FireButton({
   const [canFire, setCanFire] = useState(initialCanFire);
   const [nextFireAt, setNextFireAt] = useState(initialNextFireAt);
   const [error, setError] = useState("");
-  const nextFireLabel = formatNextFire(nextFireAt);
 
   useEffect(() => {
     if (!nextFireAt) {
@@ -88,16 +76,12 @@ export function FireButton({
         type="button"
         onClick={handleFire}
         disabled={!canFire || isPending}
-        aria-label={canFire ? "Lit this idea" : "Lit cooling down"}
-        title={
-          canFire
-            ? "Lit this idea"
-            : `Available again at ${formatNextFire(nextFireAt) ?? "later"}`
-        }
+        aria-label={canFire ? "Lit this idea" : "Lit"}
+        title={canFire ? "Lit this idea" : "Lit"}
         className={joinClasses(
           "group inline-flex w-full max-w-[20rem] items-center justify-center gap-2 border-2 px-8 py-4 font-mono text-[14px] font-medium uppercase tracking-[0.08em] transition active:scale-[0.97]",
           !canFire
-            ? "cursor-not-allowed border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
+            ? "cursor-not-allowed border-[#ea580c] bg-[#ea580c] text-[#fdfbf7]"
             : "border-[#ea580c] bg-transparent text-[#ea580c] hover:-translate-y-px hover:bg-[#ea580c] hover:text-[#fdfbf7] hover:shadow-[0_4px_12px_rgba(234,88,12,0.25)]",
           isPending && "cursor-wait opacity-80"
         )}
@@ -108,13 +92,8 @@ export function FireButton({
         >
           🔥
         </span>
-        <span>{canFire ? "Lit this idea" : "Lit"}</span>
+        <span>{canFire ? "Lit this idea" : "LIT"}</span>
       </button>
-      {!canFire && nextFireLabel ? (
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-          Available again at {nextFireLabel}
-        </p>
-      ) : null}
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>
   );
