@@ -78,34 +78,32 @@ export default async function IdeaDetailPage({
             ) : null}
           </div>
 
-          <div className="flex flex-col items-stretch gap-4 pt-2 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0 space-y-3">
-              {showDevTags ? (
-                <DevTagMeta
-                  kind={idea.kind}
-                  topic={idea.topic}
-                  tagSource={idea.tagSource}
-                  showEmptyState={false}
-                />
-              ) : null}
-              {idea.externalLink ? (
-                <a
-                  href={idea.externalLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-mono text-[11px] tracking-[0.02em] text-[#6f5645] underline decoration-[#c7a98f] underline-offset-4 transition hover:text-ink"
-                >
-                  Source: {formatExternalLinkLabel(idea.externalLink)}
-                </a>
-              ) : null}
-            </div>
-            <div className="w-full sm:w-auto sm:shrink-0">
+          <div className="flex flex-col items-center gap-4 pt-4">
+            {showDevTags ? (
+              <DevTagMeta
+                kind={idea.kind}
+                topic={idea.topic}
+                tagSource={idea.tagSource}
+                showEmptyState={false}
+              />
+            ) : null}
+            <div className="flex w-full justify-center">
               <FireButton
                 ideaId={idea.id}
                 initialCanFire={idea.viewerCanFire}
                 initialNextFireAt={idea.nextFireAt}
               />
             </div>
+            {idea.externalLink ? (
+              <a
+                href={idea.externalLink}
+                target="_blank"
+                rel="noreferrer"
+                className="max-w-full truncate text-center font-mono text-[11px] tracking-[0.02em] text-[#6f5645] underline decoration-[#c7a98f] underline-offset-4 transition hover:text-ink"
+              >
+                External link: {formatExternalLinkLabel(idea.externalLink)}
+              </a>
+            ) : null}
           </div>
         </div>
       </article>

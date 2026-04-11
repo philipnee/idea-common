@@ -86,7 +86,7 @@ export function FireButton({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <button
         type="button"
         onClick={handleFire}
