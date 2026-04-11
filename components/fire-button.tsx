@@ -98,17 +98,17 @@ export function FireButton({
             : `Available again at ${formatNextFire(nextFireAt) ?? "later"}`
         }
         className={joinClasses(
-          "inline-flex h-20 w-20 flex-col items-center justify-center gap-1 border transition",
+          "inline-flex h-20 w-20 flex-col items-center justify-center gap-1 border transition shadow-[0_8px_18px_rgba(199,94,42,0.12)]",
           !canFire
             ? "border-[#d4c3ac] bg-[#e7dcca] text-[#8b6c43]"
-            : "border-[#111111] bg-[#111111] text-white hover:bg-black",
+            : "border-[#d78f5e] bg-[#f4c69b] text-[#6f2d12] hover:border-[#c96f40] hover:bg-[#efb27d]",
           isPending && "cursor-wait opacity-80"
         )}
       >
         <span aria-hidden="true" className="text-3xl leading-none">
           🔥
         </span>
-        <span className="font-mono text-[10px] uppercase leading-none tracking-[0.16em]">
+        <span className="font-mono text-[10px] lowercase leading-none tracking-[0.08em]">
           fire!
         </span>
       </button>
