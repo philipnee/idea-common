@@ -590,7 +590,7 @@ export async function createIdea(
     };
   }
 
-  const qualityMessage = await verifyIdeaInput(idea);
+  const qualityMessage = await verifyIdeaInput(idea, details);
 
   if (qualityMessage) {
     return {

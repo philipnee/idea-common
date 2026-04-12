@@ -83,7 +83,7 @@ export function IdeaFeed({
           {ideas.length} loaded
         </p>
       ) : null}
-      <section className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ideas.map((idea) => (
           <IdeaCard key={idea.id} idea={idea} showDevTags={showDevTags} />
         ))}

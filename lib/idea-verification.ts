@@ -3,6 +3,7 @@ import { appConfig, isGeminiVerificationConfigured } from "@/lib/config";
 
 const JUNK_MESSAGE =
   "Post a concrete idea, not a reaction, placeholder, or throwaway phrase.";
+const CONTEXT_ACCEPTANCE_MIN_LENGTH = 10;
 const DEFAULT_GEMINI_PROMPT = [
   "You classify short public submissions for Litboard.",
   "Litboard accepts ideas, useful proposals, and interesting things worth sharing.",
@@ -161,6 +162,23 @@ function hasIdeaShape(words: string[]) {
   return hasAction || hasIdeaNoun || hasConnector;
 }
 
+function hasNonAsciiLetterOrNumber(value: string) {
+  return Array.from(value).some((character) => {
+    return character.charCodeAt(0) > 127 && /[\p{Letter}\p{Number}]/u.test(character);
+  });
+}
+
+function hasDetailedMultilingualContext(idea: string, details?: string | null) {
+  const trimmedIdea = idea.trim();
+  const trimmedDetails = details?.trim() ?? "";
+
+  return (
+    trimmedIdea.length >= CONTEXT_ACCEPTANCE_MIN_LENGTH &&
+    trimmedDetails.length >= CONTEXT_ACCEPTANCE_MIN_LENGTH &&
+    hasNonAsciiLetterOrNumber(`${trimmedIdea} ${trimmedDetails}`)
+  );
+}
+
 export function runDeterministicIdeaChecks(idea: string) {
   const words = getWords(idea);
 
@@ -290,7 +308,11 @@ async function readVerificationPrompt(promptPath: string) {
   }
 }
 
-export async function verifyIdeaInput(idea: string) {
+export async function verifyIdeaInput(idea: string, details?: string | null) {
+  if (hasDetailedMultilingualContext(idea, details)) {
+    return null;
+  }
+
   const deterministicMessage = runDeterministicIdeaChecks(idea);
 
   if (deterministicMessage) {
