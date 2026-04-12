@@ -11,6 +11,7 @@ marketplace: marketplace, exchange, booking, directory, listings, network, renta
 community: community, neighborhood, club, group, bulletin, mutual aid, volunteer, forum
 media: media, newsletter, podcast, publication, video, audio, writing, content
 physical-product: product, kit, box, accessory, furniture, packaged good
+social: friend
 other: other
 
 [topic]
